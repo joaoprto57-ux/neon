@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Do zero ao .gitignore</title>
+<meta name="description" content="Curso de segurança em 6 aulas. Todo código foi copiado de um projeto real — nenhum exemplo foi inventado para a aula.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+<style>
+  /* Só a capa usa isto: a lista de aulas como sumário clicável. */
+  ol.sumario{ list-style:none; padding:0; margin:22px 0 0; counter-reset:aula; }
+  ol.sumario li{ border-bottom:1px solid var(--linha); }
+  ol.sumario a{
+    display:grid; grid-template-columns:44px 1fr; gap:0 18px;
+    padding:18px 0; text-decoration:none; color:inherit;
+  }
+  ol.sumario a:hover .titulo{ color:var(--azul); }
+  ol.sumario .num{
+    font-family:var(--mono); font-size:13px; font-weight:700;
+    color:var(--fraco); padding-top:5px; font-variant-numeric:tabular-nums;
+  }
+  ol.sumario .titulo{ font-size:21px; font-weight:600; letter-spacing:-.01em; }
+  ol.sumario .linha-fina{ font-size:16px; color:var(--dim); margin-top:2px; }
+  ol.sumario .conceito{ margin:5px 0 0; }
+  @media (max-width:600px){
+    ol.sumario a{ grid-template-columns:32px 1fr; gap:0 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow"><a href="../" style="color:inherit;text-decoration:none">← Neon</a> · Núcleo de Segurança</p>
+  <h1>Do zero ao .gitignore</h1>
+  <p class="sub">Seis aulas de segurança, na ordem em que os erros aconteceram
+  de verdade. Todo código destas páginas foi copiado de um arquivo real do
+  projeto — nenhum exemplo foi remontado para ensinar.</p>
+</header>
+
+<section>
+  <p class="eyebrow">como cada aula funciona</p>
+  <div class="receita">
+    <div><b style="color:var(--vermelho)">1 · o erro</b><p>O código errado, como quase todo mundo faz.</p></div>
+    <div><b>2 · o porquê</b><p>Por que aquilo é perigoso, em português.</p></div>
+    <div><b style="color:var(--verde)">3 · a correção</b><p>O código certo.</p></div>
+    <div><b>4 · a prova</b><p>O terminal respondendo.</p></div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">as seis aulas</p>
+  <h2>Uma manhã, seis erros</h2>
+  <p class="intro">As cinco primeiras aconteceram entre 10:00 e 11:09 de um
+  mesmo dia, fotografadas enquanto aconteciam — não para a aula. A sexta
+  apareceu no dia seguinte, na revisão para publicar.</p>
+
+  <ol class="sumario">
+    <li><a href="as-janelas-da-maquina.html">
+      <span class="num">01</span>
+      <span>
+        <span class="titulo">As janelas da máquina</span>
+        <p class="linha-fina">Um scanner achou 1 porta aberta. O sistema respondeu 20.</p>
+        <p class="conceito">superfície de ataque</p>
+      </span>
+    </a></li>
+
+    <li><a href="o-arquivo-que-se-executava-sozinho.html">
+      <span class="num">02</span>
+      <span>
+        <span class="titulo">O arquivo que rodava sozinho</span>
+        <p class="linha-fina">Um <code>import</code> em qualquer lugar já abria conexão com o banco.</p>
+        <p class="conceito">o que roda no import</p>
+      </span>
+    </a></li>
+
+    <li><a href="a-senha-na-cara-do-codigo.html">
+      <span class="num">03</span>
+      <span>
+        <span class="titulo">A senha na cara do código</span>
+        <p class="linha-fina">O pior não é quebrar com a senha dentro. É funcionar.</p>
+        <p class="conceito">credencial nunca mora no código</p>
+      </span>
+    </a></li>
+
+    <li><a href="onde-a-senha-passa-a-morar.html">
+      <span class="num">04</span>
+      <span>
+        <span class="titulo">Onde a senha passa a morar</span>
+        <p class="linha-fina">Segredo sem endereço novo volta para o antigo.</p>
+        <p class="conceito">variável de ambiente e o .env</p>
+      </span>
+    </a></li>
+
+    <li><a href="o-que-o-git-nao-pode-ver.html">
+      <span class="num">05</span>
+      <span>
+        <span class="titulo">O que o Git não pode ver</span>
+        <p class="linha-fina">No Git não existe apagar. Existe trocar.</p>
+        <p class="conceito">impedir a entrada, não remover depois</p>
+      </span>
+    </a></li>
+
+    <li><a href="o-segundo-segredo.html">
+      <span class="num">06</span>
+      <span>
+        <span class="titulo">O segundo segredo</span>
+        <p class="linha-fina">Um arquivo sem senha nenhuma dentro — e mesmo assim segredo.</p>
+        <p class="conceito">conferir antes de publicar, sempre</p>
+      </span>
+    </a></li>
+  </ol>
+</section>
+
+<section>
+  <p class="eyebrow">por que este curso existe</p>
+  <h2>O erro tem endereço</h2>
+  <p class="intro">A primeira geração do código foi guardada numa pasta
+  <code>original_ia/</code> antes da revisão, com os defeitos inteiros. Dá para
+  abrir o antes e o depois lado a lado, com um <code>diff</code>, e ver o
+  conserto acontecer.</p>
+  <p class="intro">É por isso que nenhuma linha aqui é exemplo de livro. Cada
+  erro destas seis aulas quebrou alguma coisa de verdade, num computador de
+  verdade, num dia com hora marcada.</p>
+</section>
+
+<p class="fim">Núcleo de Segurança Neon · 6 aulas · o código vem do projeto Neon,
+as capturas de tela são de 4 e 5 de setembro de 2026</p>
+
+</div>
+</body>
+</html>
