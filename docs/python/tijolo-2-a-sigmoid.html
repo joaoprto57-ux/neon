@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tijolo 2</title>
+<meta name="description" content="espremer para 0 e 1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+<style>:root{ --azul:#3776ab; } @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --azul:#7cb7e8; } }</style>
+</head>
+<body>
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow"><a href="./" style="color:inherit;text-decoration:none">← Python</a> · tijolo 02</p>
+  <h1>Tijolo 2 — a sigmoid</h1>
+  <p class="sub">espremer para 0 e 1</p>
+</header>
+
+<section>
+<h1>A sigmoid: o quanto o neurônio acende</h1>
+<p>O tijolo 1 terminava com um buraco: a continha do neurônio deu <code>0.7</code>, mas
+podia ter dado <code>15</code> ou <code>-3</code>. Não tem limite. A sigmoid é a peça que
+espreme qualquer número para dentro da faixa <strong>0 a 1</strong>.</p>
+<pre><code class="language-python">import math
+
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))
+</code></pre>
+<h2>A curva, medida</h2>
+<pre><code>sigmoid(-10)  -&gt;  0.0000
+sigmoid(-2)   -&gt;  0.1192
+sigmoid(-0.7) -&gt;  0.3318
+sigmoid(0)    -&gt;  0.5000
+sigmoid(0.7)  -&gt;  0.6682
+sigmoid(2)    -&gt;  0.8808
+sigmoid(10)   -&gt;  1.0000
+</code></pre>
+<p>Três coisas para reparar nessa tabela:</p>
+<ul>
+<li><strong>No zero, dá exatamente 0.5.</strong> Neurônio indeciso, em cima do muro.</li>
+<li><strong>É simétrica</strong>: <code>sigmoid(-0.7)</code> e <code>sigmoid(0.7)</code> somam 1 (0.3318 + 0.6682).</li>
+<li><strong>Nas pontas ela satura</strong>: de 2 para 10 o valor quase não muda (0.8808 →
+  1.0000). Isso é bonito agora e vira problema depois — é a origem do
+  <em>gradiente que some</em>, quando a rede fica funda demais e para de aprender.</li>
+</ul>
+<h2>Os dois tijolos encaixados</h2>
+<pre><code class="language-python">bruto = neuronio([1, 0], [0.5, 0.8], 0.2)
+print(&quot;Neurônio:&quot;, bruto)
+print(&quot;Sigmoid do neurônio:&quot;, sigmoid(bruto))
+</code></pre>
+<pre><code>Neurônio: 0.7
+Sigmoid do neurônio: 0.6681877721681662
+</code></pre>
+<p>O neurônio fez a conta e deu <code>0.7</code>; a sigmoid disse "este neurônio está
+<strong>67% aceso</strong>". <code>0.6681877...</code> é o mesmo <code>0.6682</code> da tabela, só que sem
+arredondar — <code>round(numero, 4)</code> corta.</p>
+<p>É esse par que se repete um monte de vezes para formar a rede: <strong>o
+neurônio faz a conta, a sigmoid decide o quanto acende.</strong></p>
+<h2>Onde este código mora</h2>
+<p><code>~/Área de trabalho/estudo_ia.py</code> — o arquivo de estudo limpo, com o
+tijolo 1 e o tijolo 2 um embaixo do outro e os testes no fim.</p>
+</section>
+
+<p class="fim">Livraria do Neon · estante redes-neurais · o texto e o código são
+do João; o que entra de novo aqui é a arrumação para a web</p>
+
+</div>
+</body>
+</html>

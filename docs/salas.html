@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>As salas do Neon</title>
+<meta name="description" content="Três salas, três assuntos. Cada uma entra do seu jeito.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  /* A página é calma de propósito. O barulho é o efeito, na hora
+     que você clica — não a página parada esperando. */
+  .salas{ display:grid; gap:0; margin-top:22px; }
+  .sala{
+    display:grid; grid-template-columns:56px 1fr auto; gap:0 20px;
+    align-items:center; padding:26px 0;
+    border-bottom:1px solid var(--linha);
+    cursor:pointer; background:none; border-left:0; border-right:0; border-top:0;
+    text-align:left; font:inherit; color:inherit; width:100%;
+  }
+  .sala:hover .nome, .sala:focus-visible .nome{ color:var(--marca); }
+  .sala .n{
+    font-family:var(--mono); font-size:12px; font-weight:700;
+    color:var(--fraco); font-variant-numeric:tabular-nums;
+  }
+  .sala .nome{ font-size:23px; font-weight:600; letter-spacing:-.01em; transition:color .2s; }
+  .sala .linha-fina{ font-size:16px; color:var(--dim); margin-top:3px; }
+  .sala .conceito{ margin:6px 0 0; color:var(--marca); }
+  .sala .seta{ font-family:var(--mono); font-size:13px; color:var(--fraco); }
+
+  /* Cada sala tem a sua cor. É a única diferença entre elas aqui —
+     o resto do barulho fica guardado para o clique. */
+  .sala.seguranca{ --marca:var(--vermelho); }
+  .sala.python   { --marca:#3776ab; }
+  .sala.vibracao { --marca:var(--azul); }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .sala.python{ --marca:#7cb7e8; }
+  }
+  @media (max-width:600px){
+    .sala{ grid-template-columns:34px 1fr; }
+    .sala .seta{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow">Neon</p>
+  <h1>As salas</h1>
+  <p class="sub">Três assuntos, três salas. Cada uma entra do seu jeito — clica
+  e você vai ver.</p>
+</header>
+
+<section>
+  <p class="eyebrow">escolhe uma</p>
+
+  <div class="salas">
+    <button class="sala seguranca" onclick="efeito('glitch', 'seguranca/')">
+      <span class="n">01</span>
+      <span>
+        <span class="nome">Segurança</span>
+        <p class="linha-fina">Seis erros de uma manhã só, com a foto de cada um.</p>
+        <p class="conceito">do zero ao .gitignore</p>
+      </span>
+      <span class="seta">entrar →</span>
+    </button>
+
+    <button class="sala python" onclick="efeito('python', 'python/')">
+      <span class="n">02</span>
+      <span>
+        <span class="nome">Python</span>
+        <p class="linha-fina">Uma rede neural montada tijolo por tijolo, sem numpy.</p>
+        <p class="conceito">entradas × pesos + viés</p>
+      </span>
+      <span class="seta">entrar →</span>
+    </button>
+
+    <button class="sala vibracao" onclick="efeito('onda', 'vibracao/')">
+      <span class="n">03</span>
+      <span>
+        <span class="nome">Vibração</span>
+        <p class="linha-fina">Um motor de chão de fábrica, 6,7 milhões de amostras.</p>
+        <p class="conceito">FFT, ISO 10816, diagnóstico</p>
+      </span>
+      <span class="seta">entrar →</span>
+    </button>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">por que assim</p>
+  <h2>O efeito é a porta, não o quarto</h2>
+  <p class="intro">Esta página é calma de propósito. Quem chega precisa ler três
+  linhas e decidir — não levar susto.</p>
+  <p class="intro">O barulho vem no clique, e é diferente em cada sala: segurança
+  abre com terminal cuspindo erro, Python abre com a indentação se montando,
+  vibração abre com a onda do sensor atravessando a tela.</p>
+  <p class="intro">Aí você já entra sabendo onde está.</p>
+</section>
+
+<p class="fim">Neon · três salas · o efeito de entrada de cada uma está em
+<code>efeitos.js</code></p>
+
+</div>
+
+<script src="efeitos.js"></script>
+</body>
+</html>

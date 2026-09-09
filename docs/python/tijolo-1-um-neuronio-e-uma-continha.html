@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tijolo 1</title>
+<meta name="description" content="entradas × pesos + viés">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+<style>:root{ --azul:#3776ab; } @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --azul:#7cb7e8; } }</style>
+</head>
+<body>
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow"><a href="./" style="color:inherit;text-decoration:none">← Python</a> · tijolo 01</p>
+  <h1>Tijolo 1 — um neurônio é uma continha</h1>
+  <p class="sub">entradas × pesos + viés</p>
+</header>
+
+<section>
+<h1>Um neurônio é uma continha</h1>
+<p>Entradas vezes pesos, soma tudo, mais o viés. É isso. Não tem mágica
+nenhuma dentro de um neurônio — tem uma multiplicação e uma soma.</p>
+<ul>
+<li><strong>peso</strong>: o quanto aquela entrada importa</li>
+<li><strong>viés</strong>: o empurrãozinho que desloca o resultado, independente da entrada</li>
+</ul>
+<pre><code class="language-python"># TIJOLO 1: um neurônio é uma continha (entradas × pesos + viés)
+
+def neuronio(entradas, pesos, vies):
+    total = 0
+    for i in range(len(entradas)):
+        total = total + entradas[i] * pesos[i]   # cada entrada vezes seu peso
+    total = total + vies                          # o empurrãozinho final
+    return total
+
+# Vamos testar com 2 entradas
+entradas = [1, 0]
+pesos    = [0.5, 0.8]   # a 1ª entrada vale 0.5, a 2ª vale 0.8
+vies     = 0.2
+
+resultado = neuronio(entradas, pesos, vies)
+print(&quot;O neurônio calculou:&quot;, resultado)
+</code></pre>
+<h2>O que deu quando rodou</h2>
+<pre><code>O neurônio calculou: 0.7
+</code></pre>
+<p>Conferindo na mão: <code>1 × 0.5 + 0 × 0.8 + 0.2 = 0.7</code>. A segunda entrada era
+zero, então o peso 0.8 dela não entrou na conta — entrada zerada não
+opina, por maior que seja o peso.</p>
+<h2>O que ainda falta neste tijolo</h2>
+<p>O resultado saiu 0.7, mas podia ter saído 15 ou -3: essa continha não
+tem limite. O próximo pedaço é o que espreme esse número para dentro de
+uma faixa (a sigmoid) — e é isso que deixa vários neurônios empilháveis.</p>
+</section>
+
+<p class="fim">Livraria do Neon · estante redes-neurais · o texto e o código são
+do João; o que entra de novo aqui é a arrumação para a web</p>
+
+</div>
+</body>
+</html>

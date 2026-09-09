@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A anatomia do aprendizado</title>
+<meta name="description" content="os nomes das coisas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+<style>:root{ --azul:#3776ab; } @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --azul:#7cb7e8; } }</style>
+</head>
+<body>
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow"><a href="./" style="color:inherit;text-decoration:none">← Python</a> · tijolo 03</p>
+  <h1>A anatomia do aprendizado — os nomes das coisas</h1>
+  <p class="sub">os nomes das coisas</p>
+</header>
+
+<section>
+<h1>Os nomes técnicos do que você já fez</h1>
+<p>Os tijolos ensinaram a <strong>fazer</strong>. Esta página ensina a <strong>chamar pelo
+nome</strong> — porque é assim que está escrito em todo livro e artigo que você
+vai ler daqui pra frente.</p>
+<h2>A estrutura</h2>
+<ul>
+<li><strong>Entradas (x)</strong> — os dados crus: letras viradas número, pixels, leitura de sensor.</li>
+<li><strong>Pesos (w) e viés (b)</strong> — o peso diz o quanto cada informação importa.
+  A soma linear é <code>z = Σ(xᵢ · wᵢ) + b</code>. <strong>É o tijolo 1</strong>, escrito em símbolo.</li>
+<li><strong>Função de ativação</strong> — o filtro não-linear que decide o quanto o
+  neurônio dispara. <strong>É o tijolo 2</strong> (a sigmoid). Tem outras: a <strong>ReLU</strong>
+  é a mais usada hoje, e é bem mais simples — se for negativo vira zero,
+  se for positivo passa direto.</li>
+</ul>
+<h2>O ciclo</h2>
+<p>Uma rede nasce com pesos <strong>aleatórios</strong> — não sabe nada. Aprende repetindo
+quatro passos:</p>
+<ol>
+<li><strong>Propagação direta (forward)</strong> — o dado atravessa a rede e vira palpite.</li>
+<li><strong>Cálculo do erro (loss)</strong> — a distância entre o palpite e a resposta certa.</li>
+<li><strong>Retropropagação (backpropagation)</strong> — pela <strong>regra da cadeia</strong> do
+   cálculo, descobre-se a derivada parcial da perda em relação a cada
+   peso: <code>∂L/∂w</code>. Em português: <em>quanto este peso específico teve culpa
+   no erro</em>.</li>
+<li><strong>Gradiente descendente</strong> — cada peso anda no sentido contrário ao erro:</li>
+</ol>
+<pre><code>w_novo = w_antigo - α · ∂L/∂w
+</code></pre>
+<p>O <strong>α</strong> (alfa) é a <strong>taxa de aprendizado</strong> — o tamanho do passo. No seu
+código ele se chama <code>taxa_aprendizado = 0.5</code>. Passo grande demais e a rede
+salta por cima da resposta; pequeno demais e ela leva uma eternidade.</p>
+<h2>A frase que precisa de calibragem</h2>
+<blockquote>
+<p>"Expandir esse código mínimo para redes multicamadas é exatamente o que
+alimenta os grandes modelos de linguagem."</p>
+</blockquote>
+<p><strong>Meio verdade.</strong> O <em>mecanismo</em> é o mesmo mesmo: forward, loss, backprop,
+gradiente descendente — um LLM treina com exatamente essas quatro etapas,
+e é honesto dizer isso.</p>
+<p>O que a frase esconde é o resto:</p>
+<ul>
+<li><strong>Escala.</strong> Seu XOR tem 9 pesos. Um modelo grande tem centenas de
+  bilhões. Não é "o mesmo, maior" — em certa escala aparecem
+  comportamentos que não existiam antes.</li>
+<li><strong>Arquitetura.</strong> LLM moderno não é camada densa empilhada: é
+  <strong>transformer</strong>, cuja peça central é a <strong>atenção</strong> — um mecanismo que
+  não existe em nada do que você escreveu até aqui.</li>
+<li><strong>Dados e custo.</strong> Trilhões de palavras, milhares de placas, meses.</li>
+</ul>
+<p>Vale saber disso agora para não levar susto depois: você entendeu o
+motor. O carro de corrida usa o mesmo princípio de combustão, mas tem
+muita peça que você ainda não viu.</p>
+<h2>Onde você está</h2>
+<ul>
+<li>✅ tijolo 1 — o neurônio ([[tijolo-1-um-neuronio-e-uma-continha]])</li>
+<li>✅ tijolo 2 — a sigmoid ([[tijolo-2-a-sigmoid]])</li>
+<li>✅ o erro e o backprop — você já rodou os dois, no AND e no XOR</li>
+<li>✅ camada oculta — [[a-rede-inteira-xor-com-retropropagacao]]</li>
+</ul>
+<p>Os quatro tijolos estão de pé. O que falta não é mais teoria de rede: é
+<strong>ligar essa rede em alguma coisa sua</strong>.</p>
+</section>
+
+<p class="fim">Livraria do Neon · estante redes-neurais · o texto e o código são
+do João; o que entra de novo aqui é a arrumação para a web</p>
+
+</div>
+</body>
+</html>

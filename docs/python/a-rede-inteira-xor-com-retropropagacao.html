@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A rede inteira</title>
+<meta name="description" content="XOR e retropropagação">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+<style>:root{ --azul:#3776ab; } @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --azul:#7cb7e8; } }</style>
+</head>
+<body>
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow"><a href="./" style="color:inherit;text-decoration:none">← Python</a> · tijolo 05</p>
+  <h1>A rede inteira — XOR com retropropagação</h1>
+  <p class="sub">XOR e retropropagação</p>
+</header>
+
+<section>
+<blockquote>
+<p>Esta não é um tijolo do curso: é o <strong>destino</strong> deles. É a rede
+inteira, com os quatro tijolos já encaixados. Guardada aqui para
+comparar quando você chegar lá pelo caminho longo.</p>
+</blockquote>
+<h1>A rede que aprende sozinha</h1>
+<p>O XOR é o exemplo clássico porque <strong>não dá para resolver com um neurônio
+só</strong>. Não existe uma reta que separe <code>[0,1]</code> e <code>[1,0]</code> de <code>[0,0]</code> e
+<code>[1,1]</code>. Por isso aparece a camada oculta: ela dobra o espaço até o
+problema virar separável.</p>
+<p>Os quatro passos do ciclo:</p>
+<ol>
+<li><strong>Propagação</strong> — a entrada atravessa a rede e vira um palpite</li>
+<li><strong>Erro</strong> — quanto o palpite errou do esperado</li>
+<li><strong>Retropropagação</strong> — o erro volta para a camada oculta, repartido
+   proporcionalmente aos pesos que o causaram</li>
+<li><strong>Atualização</strong> — cada peso anda um passinho na direção que diminui o erro</li>
+</ol>
+<pre><code class="language-python">import math
+import random
+
+def sigmoid(x):
+    return 1 / (1 + math.exp(-x))
+
+def derivada_sigmoid(y):
+    # A derivada recebe a saída já calculada pela sigmoid
+    return y * (1 - y)
+
+# 1. DADOS DE TREINAMENTO: O problema XOR (Não-linear)
+# Diferente do AND/OR, o XOR requer que UMA e apenas UMA entrada seja verdadeira.
+treino = [
+    ([0, 0], 0),
+    ([0, 1], 1),
+    ([1, 0], 1),
+    ([1, 1], 0), 
+]
+
+# 2. INICIALIZAÇÃO DA REDE (Pesos e Vieses)
+# Camada Oculta: 2 entradas -&gt; 2 neurônios ocultos
+w_ocultos = [[random.uniform(-1, 1) for _ in range(2)] for _ in range(2)]
+b_ocultos = [random.uniform(-1, 1) for _ in range(2)]
+
+# Camada de Saída: 2 entradas (da oculta) -&gt; 1 neurônio de saída
+w_saida = [random.uniform(-1, 1) for _ in range(2)]
+b_saida = random.uniform(-1, 1)
+
+taxa_aprendizado = 0.5
+epocas = 20000
+
+# 3. CICLO DE TREINAMENTO COMPLETO
+for epoca in range(epocas):
+    for x, esperado in treino:
+        # --- PASSO 1: PROPAGAÇÃO (Forward) ---
+        # Calcular ativação da Camada Oculta
+        saida_oculta = [0.0, 0.0]
+        for i in range(2):
+            z = sum(x[j] * w_ocultos[i][j] for j in range(2)) + b_ocultos[i]
+            saida_oculta[i] = sigmoid(z)
+
+        # Calcular ativação da Camada de Saída
+        z_saida = sum(saida_oculta[j] * w_saida[j] for j in range(2)) + b_saida
+        saida_final = sigmoid(z_saida)
+
+        # --- PASSO 2: CÁLCULO DO ERRO ---
+        erro_saida = esperado - saida_final
+        gradiente_saida = erro_saida * derivada_sigmoid(saida_final)
+
+        # --- PASSO 3: RETROPROPAGAÇÃO (Backpropagation) ---
+        # O erro é repassado para a camada oculta proporcionalmente aos pesos
+        erro_oculto = [0.0, 0.0]
+        gradiente_oculto = [0.0, 0.0]
+        for i in range(2):
+            erro_oculto[i] = gradiente_saida * w_saida[i]
+            gradiente_oculto[i] = erro_oculto[i] * derivada_sigmoid(saida_oculta[i])
+
+        # --- PASSO 4: ATUALIZAÇÃO DOS PESOS ---
+        # Ajustar pesos da saída
+        for i in range(2):
+            w_saida[i] += taxa_aprendizado * gradiente_saida * saida_oculta[i]
+        b_saida += taxa_aprendizado * gradiente_saida
+
+        # Ajustar pesos ocultos
+        for i in range(2):
+            for j in range(2):
+                w_ocultos[i][j] += taxa_aprendizado * gradiente_oculto[i] * x[j]
+            b_ocultos[i] += taxa_aprendizado * gradiente_oculto[i]
+
+# 4. TESTE DA REDE APÓS O TREINAMENTO
+print(&quot;Resultados do Teste XOR após treinamento:&quot;)
+for x, esperado in treino:
+    saida_oculta = [sigmoid(sum(x[j] * w_ocultos[i][j] for j in range(2)) + b_ocultos[i]) for i in range(2)]
+    saida_final = sigmoid(sum(saida_oculta[j] * w_saida[j] for j in range(2)) + b_saida)
+    print(f&quot;Entrada: {x} -&gt; Previsão: {saida_final:.4f} (Esperado: {esperado})&quot;)
+</code></pre>
+<h2>O que deu quando rodou</h2>
+<pre><code>Resultados do Teste XOR após treinamento:
+Entrada: [0, 0] -&gt; Previsão: 0.0107 (Esperado: 0)
+Entrada: [0, 1] -&gt; Previsão: 0.9889 (Esperado: 1)
+Entrada: [1, 0] -&gt; Previsão: 0.9889 (Esperado: 1)
+Entrada: [1, 1] -&gt; Previsão: 0.0136 (Esperado: 0)
+</code></pre>
+<p>Trinta centésimos de segundo, 20 mil épocas. Aprendeu.</p>
+<h2>A armadilha: ela não aprende sempre</h2>
+<p>Rodei 40 vezes seguidas. <strong>Aprendeu em 34.</strong> As 6 que falharam falharam
+todas do mesmo jeito:</p>
+<pre><code>[0.011, 0.484, 0.985, 0.484]
+[0.011, 0.492, 0.989, 0.492]
+[0.011, 0.989, 0.492, 0.492]
+</code></pre>
+<p>Repare no padrão: ela acerta dois casos e trava em ~0.49 nos outros dois
+— cima do muro, sem decidir. Isso é <strong>mínimo local</strong>: dependendo dos
+pesos sorteados no começo, o gradiente desce para um buraco do qual não
+consegue mais sair, e nenhuma época a mais resolve.</p>
+<p>Não é bug no código. É uma propriedade de uma rede com só 2 neurônios
+ocultos. Os três remédios de sempre:</p>
+<ul>
+<li><strong>mais neurônios ocultos</strong> (3 ou 4 já derruba muito a taxa de falha)</li>
+<li><strong>tentar de novo</strong> com outro sorteio de pesos</li>
+<li><strong>momento (momentum)</strong> na atualização, para ganhar embalo e passar do buraco</li>
+</ul>
+<p>Se quiser reproduzir a medição, é este script:</p>
+<pre><code class="language-python"># Roda a mesma rede 40 vezes e conta quantas realmente aprenderam.
+import subprocess, re
+
+ok = 0
+falhas = []
+for n in range(40):
+    saida = subprocess.run(['python3', 'xor.py'], capture_output=True, text=True).stdout
+    nums = [float(x) for x in re.findall(r'Previsão: ([\d.]+)', saida)]
+    esperados = [0, 1, 1, 0]
+    # &quot;aprendeu&quot; = todas as 4 previsões do lado certo de 0.5
+    acertou = all((p &gt; 0.5) == (e == 1) for p, e in zip(nums, esperados))
+    if acertou:
+        ok += 1
+    else:
+        falhas.append([round(p, 3) for p in nums])
+
+print(f&quot;aprendeu em {ok} de 40 rodadas&quot;)
+if falhas:
+    print(&quot;as que empacaram:&quot;)
+    for f in falhas[:6]:
+        print(&quot;  &quot;, f)
+</code></pre>
+</section>
+
+<p class="fim">Livraria do Neon · estante redes-neurais · o texto e o código são
+do João; o que entra de novo aqui é a arrumação para a web</p>
+
+</div>
+</body>
+</html>

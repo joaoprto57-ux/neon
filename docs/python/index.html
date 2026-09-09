@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Uma rede neural em tijolos</title>
+<meta name="description" content="Uma rede neural montada do zero em Python puro, sem numpy, um tijolo por vez — até a XOR aprender.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+<style>
+  /* As cores oficiais do Python — as mesmas da logo. */
+  :root{ --python-azul:#3776ab; --python-amarelo:#ffd43b; }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){ --python-azul:#7cb7e8; }
+  }
+  .aula{
+    display:grid; grid-template-columns:56px 1fr auto; gap:0 20px;
+    align-items:center; padding:24px 0; width:100%;
+    border:0; border-bottom:1px solid var(--linha);
+    background:none; text-align:left; font:inherit; color:inherit; cursor:pointer;
+  }
+  .aula:hover .nome, .aula:focus-visible .nome{ color:var(--python-azul); }
+  .aula .n{
+    font-family:var(--mono); font-size:12px; font-weight:700;
+    color:var(--python-amarelo); font-variant-numeric:tabular-nums;
+  }
+  .aula .nome{ font-size:21px; font-weight:600; letter-spacing:-.01em; transition:color .2s; }
+  .aula .conceito{ margin:5px 0 0; color:var(--python-azul); }
+  .aula .seta{ font-family:var(--mono); font-size:13px; color:var(--fraco); }
+  @media (max-width:600px){
+    .aula{ grid-template-columns:34px 1fr; }
+    .aula .seta{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow"><a href="../salas.html" style="color:inherit;text-decoration:none">← salas</a> · Python</p>
+  <h1>Uma rede neural em tijolos</h1>
+  <p class="sub">Python puro, sem numpy, sem biblioteca nenhuma. Um tijolo por
+  vez, cada um rodado e medido antes de virar página.</p>
+</header>
+
+<section>
+  <p class="eyebrow">os cinco tijolos</p>
+    <button class="aula" onclick="efeito('python', 'tijolo-1-um-neuronio-e-uma-continha.html')">
+      <span class="n">01</span>
+      <span>
+        <span class="nome">Tijolo 1 — um neurônio é uma continha</span>
+        <p class="conceito">entradas × pesos + viés</p>
+      </span>
+      <span class="seta">abrir →</span>
+    </button>
+    <button class="aula" onclick="efeito('python', 'tijolo-2-a-sigmoid.html')">
+      <span class="n">02</span>
+      <span>
+        <span class="nome">Tijolo 2 — a sigmoid</span>
+        <p class="conceito">espremer para 0 e 1</p>
+      </span>
+      <span class="seta">abrir →</span>
+    </button>
+    <button class="aula" onclick="efeito('python', 'a-anatomia-do-aprendizado.html')">
+      <span class="n">03</span>
+      <span>
+        <span class="nome">A anatomia do aprendizado — os nomes das coisas</span>
+        <p class="conceito">os nomes das coisas</p>
+      </span>
+      <span class="seta">abrir →</span>
+    </button>
+    <button class="aula" onclick="efeito('python', 'a-porta-and-o-primeiro-que-aprendeu.html')">
+      <span class="n">04</span>
+      <span>
+        <span class="nome">A porta AND — o primeiro perceptron que aprendeu</span>
+        <p class="conceito">o primeiro que aprendeu</p>
+      </span>
+      <span class="seta">abrir →</span>
+    </button>
+    <button class="aula" onclick="efeito('python', 'a-rede-inteira-xor-com-retropropagacao.html')">
+      <span class="n">05</span>
+      <span>
+        <span class="nome">A rede inteira — XOR com retropropagação</span>
+        <p class="conceito">XOR e retropropagação</p>
+      </span>
+      <span class="seta">abrir →</span>
+    </button>
+</section>
+
+<section>
+  <p class="eyebrow">a medição que ninguém publica</p>
+  <h2>A XOR não converge sempre</h2>
+  <p class="intro">Com 2 neurônios na camada oculta, a rede aprende a XOR em
+  cerca de <b>34 de 40 rodadas</b>. Nas outras seis ela empaca num mínimo local
+  e as previsões travam perto de <b>0,49</b> — meio caminho, sem decidir nada.</p>
+  <p class="intro">Quase todo tutorial mostra a rodada que deu certo e vai
+  embora. A informação útil é a outra: <b>o mesmo código, rodado quarenta vezes,
+  falha seis.</b> Isso é treino de rede neural de verdade.</p>
+</section>
+
+<p class="fim">Neon · sala de Python · o texto e o código vêm da Livraria,
+estante redes-neurais</p>
+
+</div>
+
+<script src="../efeitos.js"></script>
+</body>
+</html>
