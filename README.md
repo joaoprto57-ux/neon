@@ -1,5 +1,25 @@
 # Neon
 
+**Site no ar → https://joaoprto57-ux.github.io/neon/**
+
+Um projeto de segurança que virou curso. O código roda, e cada erro que
+aparece nas aulas quebrou alguma coisa de verdade nesta máquina — com a
+foto do terminal na hora em que quebrou.
+
+| | |
+|---|---|
+| [Do zero ao .gitignore](https://joaoprto57-ux.github.io/neon/seguranca/) | 6 aulas de segurança, do scanner de portas ao `.gitignore` |
+| [Uma rede neural em tijolos](https://joaoprto57-ux.github.io/neon/python/) | rede neural em Python puro, sem numpy, até a XOR aprender |
+| [Vibração ao vivo](https://joaoprto57-ux.github.io/neon/vibracao/) | laudo de vibração de um motor real: FFT, Nyquist, ISO 10816 |
+
+A pasta [`original_ia/`](original_ia/) guarda a primeira geração do código,
+com os defeitos inteiros. Dá para rodar `diff -u original_ia/arquivo.py arquivo.py`
+e ver o conserto acontecer — é o "antes" de cada aula.
+
+---
+
+## O que é, por dentro
+
 Sistema de monitoramento de segurança local: vigilância de rede, rastreamento
 de processos de IA e triagem de e-mail — com uma API HTTP em Node/TypeScript
 por cima dos módulos Python.
