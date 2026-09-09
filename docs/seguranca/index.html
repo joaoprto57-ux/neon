@@ -18,7 +18,7 @@
         body { background: var(--bg-dark); color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
         /* --- BACKGROUND & GRID --- */
-        canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; opacity: .45; }
         .grid-overlay { position: fixed; inset: 0; background-image: radial-gradient(#111 1px, transparent 1px); background-size: 40px 40px; z-index: 0; }
 
 
@@ -37,6 +37,21 @@
             user-select: none; pointer-events: none;
             overflow: hidden;
             will-change: transform;
+        }
+
+        /* --- O VÉU ---
+           Entre o efeito e o texto. Sem ele, a lua clara passa por
+           baixo das letras brancas e some tudo. Com ele, o efeito
+           continua aparecendo — mas atrás de um vidro escuro.
+
+           A ordem das camadas, de trás para frente:
+             1  a lua        2  o código de fundo
+             3  O VÉU        10 o texto                            */
+        .veu {
+            position: fixed; inset: 0; z-index: 3; pointer-events: none;
+            background:
+              radial-gradient(120% 80% at 50% 40%, rgba(0,0,0,.55), rgba(0,0,0,.86) 70%),
+              linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.75));
         }
 
         /* --- UI ELEMENTS --- */
@@ -71,6 +86,13 @@
         .badge-sideral { position: fixed; right: 0; top: 50%; transform: translateY(-50%) rotate(90deg); transform-origin: right; background: #fff; color: #000; padding: 10px 25px; font-weight: 700; font-size: 10px; letter-spacing: 2px; z-index: 100; }
 
         /* --- HERO SECTION --- */
+        .hero .dentro-hero {
+            position: relative;
+            padding: 42px 34px; border-radius: 3px;
+            background: rgba(6,6,8,.55);
+            backdrop-filter: blur(3px);
+            display: inline-block;
+        }
         .hero { position: relative; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; padding: 0 20px; }
         /* O nome do arquivo é escrito com a fonte de código, na cor do
            terminal: o título vira a coisa de que ele fala. */
@@ -81,18 +103,31 @@
             letter-spacing: -0.01em;
         }
         .hero h1 { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.02; margin-bottom: 24px; text-wrap: balance; }
-        .hero p { max-width: 46ch; color: var(--text-gray); font-size: 1.1rem; line-height: 1.6; margin: 0 auto; }
+        .descer {
+            margin-top: 30px; font-family: 'Fira Code'; font-size: .72rem;
+            letter-spacing: .22em; text-transform: uppercase;
+            background: transparent; color: var(--neon-green);
+            border: 1px solid rgba(0,255,204,.45); border-radius: 2px;
+            padding: 13px 22px; cursor: pointer; transition: .25s;
+        }
+        .descer:hover { background: var(--neon-green); color: #000; }
+        .hero p { max-width: 46ch; color: #c3c7ce; font-size: 1.1rem; line-height: 1.6; margin: 0 auto; }
 
 
         /* --- O RITUAL: como toda aula funciona --- */
-        .ritual { position: relative; z-index: 10; padding: 40px 5% 60px; max-width: 1200px; margin: 0 auto; }
+        .ritual { position: relative; z-index: 10; padding: 56px 5% 64px; max-width: 1200px; margin: 0 auto; }
+        .ritual::before {
+            content: ""; position: absolute; inset: 0 -100vw; z-index: -1;
+            background: rgba(6,6,8,.88);
+            border-block: 1px solid rgba(255,255,255,.07);
+        }
         .ritual > .titulo { font-family: 'Playfair Display'; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.15; margin-bottom: 14px; text-wrap: balance; }
-        .ritual > .abre { color: var(--text-gray); max-width: 60ch; line-height: 1.65; margin-bottom: 44px; }
+        .ritual > .abre { color: #b6bac2; max-width: 60ch; line-height: 1.65; margin-bottom: 44px; }
         .passos { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 28px; }
         .passo-r { border-top: 2px solid rgba(255,255,255,.12); padding-top: 18px; }
         .passo-r .num { font-family: 'Fira Code'; font-size: .7rem; letter-spacing: .18em; display: block; margin-bottom: 10px; }
         .passo-r h4 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -.01em; }
-        .passo-r p { color: #a9adb6; font-size: .93rem; line-height: 1.55; }
+        .passo-r p { color: #b6bac2; font-size: .93rem; line-height: 1.55; }
         .passo-r.erro   { border-top-color: var(--neon-red); }
         .passo-r.erro   .num { color: var(--neon-red); }
         .passo-r.ok     { border-top-color: var(--neon-green); }
@@ -149,12 +184,19 @@ $ git check-ignore -v .env
 .gitignore:15:.env	.env
 </div>
     <div class="grid-overlay"></div>
+    <div class="veu"></div>
     <canvas id="luaCanvas"></canvas>
 
     <!-- HERO -->
     <section class="hero">
-        <h1>Do zero ao<br><span class="arquivo">.gitignore</span></h1>
-        <p>Seis erros que quebraram uma máquina de verdade, numa manhã só — com a foto de cada um. Nenhum exemplo foi inventado para a aula.</p>
+        <div class="dentro-hero">
+            <h1>Do zero ao<br><span class="arquivo">.gitignore</span></h1>
+            <p>Seis erros que quebraram uma máquina de verdade, numa manhã só —
+            com a foto de cada um. Nenhum exemplo foi inventado para a aula.</p>
+            <button class="descer" onclick="document.querySelector('.ritual').scrollIntoView({behavior:'smooth'})">
+                começar ↓
+            </button>
+        </div>
     </section>
 
     <!-- O RITUAL -->
@@ -250,7 +292,7 @@ $ git check-ignore -v .env
             const canvas = document.getElementById('luaCanvas');
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5;
+            camera.position.z = 11;   // era 5: a lua tomava a tela inteira
             renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
 
