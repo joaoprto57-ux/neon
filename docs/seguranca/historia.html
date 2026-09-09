@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Uma manhã, seis erros</title>
+<meta name="description" content="Seis erros de segurança que quebraram uma máquina de verdade numa manhã só — em seis telas, uma por erro.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Space+Grotesk:wght@700&family=Fira+Code&display=swap" rel="stylesheet">
+<style>
+  :root{ --verde:#00ffcc; --vermelho:#ff3e3e; --fraco:#9aa0a8; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#000;color:#fff;font-family:'Inter',sans-serif;overflow-x:hidden}
+
+  /* A lua fica FIXA no fundo. Quem anda é o texto, por cima dela. */
+  canvas{position:fixed;inset:0;z-index:1;pointer-events:none}
+
+  .camada{position:relative;z-index:10}
+
+  /* Uma tela por erro. svh e não vh: no celular a barra do
+     navegador some e volta, e com vh a tela pula. */
+  .tela{
+    min-height:100svh; display:flex; align-items:center;
+    padding:90px max(24px, 8vw);
+  }
+  .caixa{max-width:620px}
+
+  .olho{
+    font-family:'Fira Code',monospace; font-size:.72rem; letter-spacing:.22em;
+    color:var(--verde); display:block; margin-bottom:18px;
+  }
+  h1{font-size:clamp(2.6rem,9vw,5.4rem);font-weight:900;line-height:1;letter-spacing:-.025em;margin-bottom:22px}
+  h1 .arquivo{font-family:'Fira Code',monospace;font-weight:400;color:var(--verde);letter-spacing:-.01em}
+  h2{font-size:clamp(1.9rem,5.5vw,3rem);font-weight:800;line-height:1.08;letter-spacing:-.02em;margin-bottom:16px;text-wrap:balance}
+  p{color:#c3c7ce;font-size:clamp(1rem,2.2vw,1.15rem);line-height:1.6;max-width:46ch}
+  .conceito{font-family:'Fira Code',monospace;font-size:.78rem;color:var(--fraco);margin-top:14px}
+
+  /* O cartão de cada erro: escuro e sólido, para o texto nunca
+     disputar com os cacos da lua passando atrás. */
+  .erro{
+    display:block; width:100%; text-align:left; cursor:pointer;
+    background:rgba(6,7,9,.82); backdrop-filter:blur(7px);
+    border:1px solid rgba(255,255,255,.10); border-left:2px solid var(--vermelho);
+    border-radius:3px; padding:clamp(26px,4vw,44px);
+    color:inherit; font:inherit; transition:.3s;
+  }
+  .erro:hover, .erro:focus-visible{
+    border-color:var(--verde); border-left-color:var(--verde);
+    background:rgba(10,12,15,.92); transform:translateY(-4px);
+  }
+  .abrir{
+    display:inline-block; margin-top:22px; font-family:'Fira Code',monospace;
+    font-size:.74rem; letter-spacing:.18em; text-transform:uppercase; color:var(--verde);
+  }
+
+  /* barra de cima */
+  .topo{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    padding:16px 22px; font-family:'Space Grotesk',sans-serif;
+    font-size:.68rem; letter-spacing:.26em; text-transform:uppercase; color:var(--fraco);
+    background:rgba(0,0,0,.7); backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .topo .marca{margin-right:auto}
+  .topo a{color:var(--fraco);text-decoration:none;border:1px solid rgba(255,255,255,.18);padding:7px 13px;border-radius:2px;transition:.25s}
+  .topo a:hover{color:#000;background:var(--verde);border-color:var(--verde)}
+
+  .fim{padding:80px max(24px,8vw) 120px;color:var(--fraco);font-size:.9rem;line-height:1.7}
+  .fim b{color:#fff}
+  .fim a{color:var(--verde)}
+
+  @media (prefers-reduced-motion:reduce){ .erro{transition:none} }
+</style>
+</head>
+<body>
+
+<canvas id="luaCanvas"></canvas>
+
+<div class="topo">
+  <span class="marca">← Neon · seis erros</span>
+  <a href="./">ver como lista</a>
+  <a href="../python/">Python</a>
+  <a href="../vibracao/">Vibração</a>
+</div>
+
+<div class="camada">
+
+  <section class="tela">
+    <div class="caixa">
+      <span class="olho">Núcleo de Segurança Neon</span>
+      <h1>Do zero ao<br><span class="arquivo">.gitignore</span></h1>
+      <p>Seis erros que quebraram uma máquina de verdade, entre 10:00 e 11:09
+      de uma manhã só. Cada um fotografado enquanto acontecia — nenhum exemplo
+      foi inventado para a aula.</p>
+      <p class="conceito">role para ver os seis ↓</p>
+    </div>
+  </section>
+
+  <section class="tela">
+    <button class="erro" onclick="efeito('glitch','as-janelas-da-maquina.html')">
+      <span class="olho">01 // superfície de ataque</span>
+      <h2>As janelas da máquina</h2>
+      <p>Um scanner achou 1 porta aberta. O sistema respondeu 20. Ele não errou —
+      respondeu exatamente as cinco que a lista perguntou.</p>
+      <span class="abrir">abrir a aula →</span>
+    </button>
+  </section>
+
+  <section class="tela">
+    <button class="erro" onclick="efeito('glitch','o-arquivo-que-se-executava-sozinho.html')">
+      <span class="olho">02 // execução no import</span>
+      <h2>O arquivo que rodava sozinho</h2>
+      <p>Um <code>import</code> em qualquer lugar do projeto já abria conexão com
+      o banco. Em Python, importar é executar.</p>
+      <span class="abrir">abrir a aula →</span>
+    </button>
+  </section>
+
+  <section class="tela">
+    <button class="erro" onclick="efeito('glitch','a-senha-na-cara-do-codigo.html')">
+      <span class="olho">03 // credencial exposta</span>
+      <h2>A senha na cara do código</h2>
+      <p>O pior não é quebrar com a senha dentro. É funcionar. Erro que quebra se
+      arruma no mesmo dia; erro que funciona fica anos.</p>
+      <span class="abrir">abrir a aula →</span>
+    </button>
+  </section>
+
+  <section class="tela">
+    <button class="erro" onclick="efeito('glitch','onde-a-senha-passa-a-morar.html')">
+      <span class="olho">04 // variável de ambiente</span>
+      <h2>Onde a senha passa a morar</h2>
+      <p>Tirar o segredo do código sem ter para onde levar é como ele volta na
+      semana seguinte, “só para testar rápido”.</p>
+      <span class="abrir">abrir a aula →</span>
+    </button>
+  </section>
+
+  <section class="tela">
+    <button class="erro" onclick="efeito('glitch','o-que-o-git-nao-pode-ver.html')">
+      <span class="olho">05 // impedir a entrada</span>
+      <h2>O que o Git não pode ver</h2>
+      <p>No Git não existe apagar, existe trocar. Um <code>git add .</code>
+      distraído basta, e o commit velho guarda a senha para sempre.</p>
+      <span class="abrir">abrir a aula →</span>
+    </button>
+  </section>
+
+  <section class="tela">
+    <button class="erro" onclick="efeito('glitch','o-segundo-segredo.html')">
+      <span class="olho">06 // conferir antes de publicar</span>
+      <h2>O segundo segredo</h2>
+      <p>Um arquivo sem senha nenhuma dentro — e mesmo assim segredo. Tinha os
+      IPs que esta máquina acessou, com processo e porta.</p>
+      <span class="abrir">abrir a aula →</span>
+    </button>
+  </section>
+
+  <div class="fim">
+    <p><b>A regra que vale para as seis:</b> cada erro aqui quebrou alguma coisa
+    de verdade, num computador de verdade, num dia com hora marcada.</p>
+    <p style="margin-top:12px">Prefere escolher em vez de rolar?
+    <a href="./">ver como lista →</a></p>
+  </div>
+
+</div>
+
+<script src="../efeitos.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* A LUA QUE RECUA — a ideia boa do modelo do AI Studio.
+   Em vez de escurecer a tela para o texto aparecer, a lua se
+   afasta no espaço 3D conforme você rola. O efeito continua
+   nítido e o texto fica limpo, sem véu nenhum na frente. */
+(function () {
+  const canvas = document.getElementById('luaCanvas');
+  if (!canvas || typeof THREE === 'undefined') return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { canvas.style.display='none'; return; }
+
+  let cena, camera, renderizador, lua, rolagem = 0;
+  try {
+    cena = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
+    camera.position.z = 6;
+    renderizador = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderizador.setSize(innerWidth, innerHeight);
+    renderizador.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+    cena.add(new THREE.AmbientLight(0xffffff, .3));
+    const sol = new THREE.DirectionalLight(0xffffff, 1.2);
+    sol.position.set(5, 3, 5); cena.add(sol);
+
+    // detalhe 20 e não 25: 8.820 triângulos em vez de 13.520.
+    // A diferença não se vê, e o celular fraco agradece.
+    const geo = new THREE.IcosahedronGeometry(2, 20).toNonIndexed();
+    const n = geo.attributes.position.count, dir = new Float32Array(n*3), p = geo.attributes.position;
+    for (let i = 0; i < n; i += 3) {
+      const x=(p.getX(i)+p.getX(i+1)+p.getX(i+2))/3,
+            y=(p.getY(i)+p.getY(i+1)+p.getY(i+2))/3,
+            z=(p.getZ(i)+p.getZ(i+1)+p.getZ(i+2))/3, f=Math.random()*2+1;
+      for (let j = 0; j < 3; j++){ dir[(i+j)*3]=x*f; dir[(i+j)*3+1]=y*f; dir[(i+j)*3+2]=z*f; }
+    }
+    geo.setAttribute('aDirecao', new THREE.BufferAttribute(dir, 3));
+
+    lua = new THREE.Mesh(geo, new THREE.ShaderMaterial({
+      uniforms:{ uTextura:{ value:new THREE.TextureLoader().load('../lua.jpg') }, uExplosao:{ value:0 } },
+      vertexShader:`varying vec2 vUv; attribute vec3 aDirecao; uniform float uExplosao;
+        void main(){ vUv=uv; vec3 q=position+(aDirecao*uExplosao);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(q,1.0); }`,
+      fragmentShader:`varying vec2 vUv; uniform sampler2D uTextura;
+        void main(){ gl_FragColor=texture2D(uTextura,vUv); }`,
+      side: THREE.DoubleSide
+    }));
+    cena.add(lua);
+  } catch (e) { canvas.style.display='none'; return; }
+
+  function aoRolar(){
+    const alt = document.documentElement.scrollHeight - innerHeight;
+    rolagem = alt > 0 ? Math.min(scrollY / alt, 1) : 0;   // sem divisão por zero
+  }
+  addEventListener('scroll', aoRolar, { passive:true });
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+    renderizador.setSize(innerWidth, innerHeight);
+  });
+
+  (function quadro(){
+    requestAnimationFrame(quadro);
+    lua.material.uniforms.uExplosao.value = rolagem * 4;
+    lua.rotation.y += 0.002;
+    lua.position.z = -rolagem * 6;    // ← recua conforme você desce
+    renderizador.render(cena, camera);
+  })();
+  aoRolar();
+})();
+</script>
+</body>
+</html>
