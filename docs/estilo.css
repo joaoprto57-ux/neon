@@ -341,3 +341,33 @@ body.tem-lua header.capa{ display: none; }
 @media (prefers-reduced-motion: reduce){
   .desce span{ animation: none; }
 }
+
+
+/* ------------------------------------------------------------
+   8) AS TELAS — foto de prova
+
+   Foto de tela de painel é escura e cheia de detalhe. Ela pede
+   fundo próprio e legenda em fonte de código, para não competir
+   com o texto que está sendo lido em volta.
+   ------------------------------------------------------------ */
+
+.telas{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 26px;
+  margin: 24px 0 0;
+}
+figure.tela{ margin: 0; }
+figure.tela img{
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--linha);
+  background: var(--caixa);
+}
+figure.tela figcaption{
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.55;
+  color: var(--fraco); margin-top: 8px;
+}
+figure.tela figcaption b{ color: var(--dim); font-weight: 700; }
+
+/* Uma foto sozinha, ocupando a coluna toda. */
+figure.tela.larga{ grid-column: 1 / -1; max-width: 420px; }
