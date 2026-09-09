@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O motor está desbalanceado</title>
+<meta name="description" content="Um acelerômetro de celular, um motor de chão de fábrica e a norma ISO 10816: como um pico de frequência vira diagnóstico.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body class="tem-lua">
+
+<canvas id="lua"></canvas>
+
+<section class="capa-lua">
+  <p class="eyebrow"><a href="../" style="color:inherit;text-decoration:none">← Neon</a> · Vibração ao Vivo · relatório técnico</p>
+  <h1>O motor está desbalanceado</h1>
+  <p class="sub">Um acelerômetro comum, um motor girando a 3600 RPM num chão de
+  fábrica, e uma norma internacional. O diagnóstico saiu de um pico só.</p>
+  <a class="desce" href="#conteudo">começar <span>↓</span></a>
+</section>
+
+<div class="folha" id="conteudo">
+
+<section>
+  <p class="eyebrow">o que foi medido</p>
+  <h2>Não é exercício de laboratório</h2>
+  <p class="intro">Os dados vêm de manutenção preditiva em campo — colunas de
+  elevação, redutores e conjuntos motrizes em operação. O sensor foi instalado
+  sobre a máquina rodando, não numa bancada.</p>
+  <p class="intro">A taxa de amostragem foi de <b>199 amostras por segundo</b>, e o
+  histórico passou de <b>6,7 milhões de amostras</b>.</p>
+</section>
+
+<section>
+  <p class="eyebrow">os números, lidos do painel</p>
+  <h2>O que o sensor viu</h2>
+  <ul class="regras">
+    <li><b>59,4 – 67,2 Hz</b><span>a frequência dominante, o pico do espectro FFT</span></li>
+    <li><b>3563 – 4031 RPM</b><span>a rotação equivalente, pela relação <code>n = 60·f</code></span></li>
+    <li><b>0,4080 – 0,4464 g</b><span>a vibração em valor RMS</span></li>
+    <li><b>0,00294 g</b><span>a linha de base: o mesmo sensor, parado</span></li>
+    <li><b>139 – 153×</b><span>quantas vezes a vibração supera o ruído do sensor parado</span></li>
+  </ul>
+  <p class="intro" style="margin-top:18px">Essa última linha é a que autoriza tudo
+  o que vem depois. Um sinal 140 vezes acima do ruído é <b>sinal</b>, não é
+  imaginação do aparelho.</p>
+</section>
+
+<section>
+  <p class="eyebrow">parte I · a física</p>
+  <h2>De hertz para rotação</h2>
+  <p class="intro">Uma volta do eixo é um ciclo. Frequência é ciclo por segundo,
+  rotação é volta por minuto — então a conversão é só o 60:</p>
+  <pre class="depois"><code>n = 60 · f        f = 67,2 Hz  →  n = 4032 RPM
+                  o painel mostrou 4031 RPM</code></pre>
+  <p class="intro">Todos os pares medidos batem com erro menor que <b>0,1%</b>.
+  Isso prova que o pico do espectro é mesmo a rotação do eixo — e não interferência
+  elétrica ou outra coisa girando por perto.</p>
+
+  <h2 style="margin-top:32px">0,41 g parece muito — e são 22 micrômetros</h2>
+  <p class="intro">Aceleração, velocidade e deslocamento são a mesma coisa
+  integrada no tempo. Em valores RMS, cada integração divide pela frequência
+  angular:</p>
+  <pre class="depois"><code>v_rms = a_rms / ω           ω = 2πf
+x_rms = a_rms / ω²
+
+a_rms = 0,4080 g = 4,001 m/s²,  f = 67,2 Hz,  ω = 422,2 rad/s
+
+v_rms = 4,001 / 422,2      = 9,48 mm/s
+x_rms = 4,001 / 422,2²     = 22,4 µm     (pico a pico ≈ 63 µm)</code></pre>
+  <p class="intro">O eixo se desloca <b>22 micrômetros</b> — um quinto da espessura
+  de um fio de cabelo. A aceleração cresce com o quadrado da frequência, então
+  frequência alta gera muita aceleração com pouquíssimo movimento.</p>
+</section>
+
+<section>
+  <p class="eyebrow">parte II · a matemática</p>
+  <h2>Onde o espectro nasce</h2>
+  <p class="intro">O gráfico de barras que o painel mostra é a Transformada de
+  Fourier do sinal no tempo. O sinal é amostrado, então o que roda de verdade é a
+  versão discreta:</p>
+  <pre class="depois"><code>X_k = Σ  a_n · e^(−i2πkn/N)        f_k = k · f_s/N</code></pre>
+  <p class="intro">E há um limite que não se negocia — o <b>teorema de Nyquist</b>:
+  com 199 amostras por segundo, a maior frequência mensurável sem distorção é
+  metade disso.</p>
+  <pre class="depois"><code>f_Nyquist = f_s / 2 = 99,5 Hz        o pico está em ~60–67 Hz  ✓ dentro</code></pre>
+  <p class="intro">Se o pico estivesse acima de 99,5 Hz, o número na tela seria
+  mentira — e pareceria igualmente convincente. Conferir esse limite é o que separa
+  medição de chute.</p>
+
+  <h2 style="margin-top:32px">O sinal não é um seno puro</h2>
+  <p class="intro">O fator de crista compara o pico com o RMS: diz o quanto o sinal
+  é "pontudo".</p>
+  <pre class="depois"><code>CF = a_pico / a_rms = 0,9905 / 0,4325 = 2,29
+
+seno puro:  CF = √2 ≈ 1,41
+medido:     CF ≈ 2,3        →  tem harmônico e algo impulsivo junto</code></pre>
+</section>
+
+<section>
+  <p class="eyebrow">parte III · o diagnóstico</p>
+  <h2>A assinatura do desbalanceamento</h2>
+  <p class="intro">Toda a energia concentrada num <b>único pico, na própria
+  frequência de rotação</b> (ordem 1×), radial e estável, é a assinatura clássica
+  de desbalanceamento de massa do rotor.</p>
+  <p class="intro">Se fosse trinca, folga ou defeito de rolamento, apareceriam
+  picos em outras ordens (2×, 3×) ou bandas laterais, com fator de crista bem mais
+  alto (4 a 6). Não é o caso. O quadro aponta para desbalanceamento.</p>
+
+  <h2 style="margin-top:32px">E a norma dá o veredito</h2>
+  <p class="intro">A ISO 10816 mede em velocidade RMS. Convertendo, a máquina está
+  entre <b>9,5 e 11,7 mm/s</b> — e para máquina de porte médio (Classe II) isso cai
+  na pior faixa:</p>
+  <ul class="regras">
+    <li><b>A — bom</b><span>até 2,8 mm/s</span></li>
+    <li><b>B — aceitável</b><span>2,8 a 4,5 mm/s</span></li>
+    <li><b>C — atenção</b><span>4,5 a 7,1 mm/s</span></li>
+    <li><b style="color:var(--vermelho)">D — inaceitável</b><span>acima de 7,1 mm/s &nbsp;·&nbsp; <b>esta máquina: 9,5 – 11,7</b></span></li>
+  </ul>
+  <p class="intro" style="margin-top:18px">Recomendação: verificar fixação e base,
+  balancear o conjunto rotativo, e reavaliar buscando <code>v_rms &lt; 2,8 mm/s</code>
+  — de volta para as zonas A/B.</p>
+</section>
+
+<section>
+  <p class="eyebrow">a parte que quase ninguém escreve</p>
+  <h2>O que este relatório não pode afirmar</h2>
+  <p class="intro">O acelerômetro <b>não é calibrado</b> — é um MEMS de celular. As
+  amplitudes têm caráter comparativo, não metrológico.</p>
+  <p class="intro">A conversão de aceleração para velocidade assume que a energia
+  se concentra na frequência dominante — uma aproximação de banda estreita, válida
+  aqui porque o espectro tem um pico só, e falsa num sinal espalhado.</p>
+  <p class="intro">E como o pico oscila em torno de 60 Hz, convém confirmar com
+  tacômetro que ele é mecânico (rotação) e não interferência elétrica da rede.</p>
+  <p class="intro">Nada disso derruba o diagnóstico. Só diz até onde ele vale — que
+  é o que separa um laudo de um chute com gráfico bonito.</p>
+</section>
+
+<section>
+  <p class="eyebrow">o documento</p>
+  <h2>O relatório completo</h2>
+  <p class="intro">Cinco páginas: fotos do campo, as telas do painel, as
+  deduções passo a passo, o sinal no tempo, o espectro FFT e a faixa da ISO 10816.</p>
+  <p style="margin-top:18px">
+    <a href="relatorio-analise-vibracao.pdf">Relatório Técnico de Análise de Vibração (PDF, 1,1 MB) →</a>
+  </p>
+</section>
+
+<section>
+  <p class="eyebrow">para levar</p>
+  <p class="regra-final">Um número só — 66 Hz — vira rotação, vira velocidade,
+  vira faixa de norma e vira ordem de serviço. O sensor não diagnostica nada: quem
+  diagnostica é a conta que você faz depois dele.</p>
+</section>
+
+<p class="fim">Vibração ao Vivo · relatório de 6 de setembro de 2026 · dados de
+medição real em campo, acelerômetro não calibrado</p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../lua.js"></script>
+
+</body>
+</html>
