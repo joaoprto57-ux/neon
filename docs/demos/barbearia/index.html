@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<!-- ══════════════════════════════════════════════════════════════
+     ESTA É A DEMONSTRAÇÃO. É UM MOLDE.
+
+     Para virar a página de um cliente, você troca só o que está
+     marcado com  ← TROCAR.  O resto funciona igual pra qualquer
+     barbearia, oficina, estúdio ou salão.
+
+     A barbearia daqui é INVENTADA. Nunca use o nome, o telefone
+     ou a foto de um negócio de verdade sem a pessoa autorizar.
+     ══════════════════════════════════════════════════════════════ -->
+
+<title>Navalha & Osso — Barbearia</title>                    <!-- ← TROCAR -->
+<meta name="description" content="Barbearia no centro. Corte, barba e navalha, com hora marcada.">
+
+<!-- O que aparece quando alguém manda o link no WhatsApp.
+     Sem isso, o link chega sem título e sem descrição — e
+     ninguém clica. Isso vale dinheiro e quase ninguém põe. -->
+<meta property="og:title" content="Navalha & Osso — Barbearia">
+<meta property="og:description" content="Corte, barba e navalha. Hora marcada pelo WhatsApp.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600&display=swap">
+
+<style>
+/* ─── 1. AS CORES E AS LETRAS ────────────────────────────────
+   Duas famílias só. A Bebas Neue é condensada e alta: ocupa
+   pouca largura e grita — perfeita pra título de barbearia.
+   A Inter é pra ler. Nunca troque as duas de lugar.          */
+:root{
+  --preto:#0d0d0f;
+  --carvao:#16161a;
+  --creme:#f3ede4;
+  --ouro:#c8a45c;          /* ← TROCAR pela cor do cliente */
+  --cinza:#9a9691;
+  --titulo:'Bebas Neue', Impact, sans-serif;
+  --texto:'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--preto);color:var(--creme);font-family:var(--texto);line-height:1.6;overflow-x:hidden}
+.dentro{width:min(1100px,92vw);margin:0 auto}
+h1,h2,h3{font-family:var(--titulo);font-weight:400;letter-spacing:.01em;line-height:.95}
+
+
+/* ─── 2. A CAPA ──────────────────────────────────────────────
+   100svh e não 100vh: no celular a barra do navegador some e
+   volta, e com vh a capa "pula". svh é a altura de verdade.  */
+.capa{
+  min-height:100svh; display:flex; flex-direction:column;
+  justify-content:center; position:relative; overflow:hidden;
+  padding:90px 0 60px;
+}
+/* O lugar da foto do cliente. Enquanto não tem foto, um degradê
+   segura o visual — e a página nunca fica quebrada esperando. */
+.capa::before{
+  content:""; position:absolute; inset:0; z-index:0;
+  background:
+    radial-gradient(70% 55% at 78% 30%, rgba(200,164,92,.20), transparent 60%),
+    radial-gradient(50% 40% at 10% 80%, rgba(200,164,92,.08), transparent 60%),
+    var(--preto);
+  /* ← TROCAR por:  background:url('foto-da-loja.jpg') center/cover;  */
+}
+.capa .dentro{position:relative;z-index:2}
+.olho{font-size:.72rem;letter-spacing:.42em;text-transform:uppercase;color:var(--ouro);margin-bottom:18px}
+.capa h1{font-size:clamp(3.4rem,15vw,10rem);color:var(--creme)}
+.capa h1 em{font-style:normal;color:var(--ouro)}
+.capa .frase{font-size:clamp(1rem,2.4vw,1.25rem);color:var(--cinza);max-width:34ch;margin:22px 0 34px}
+
+/* O botão. Um só, grande, e ele é o objetivo da página inteira. */
+.botao{
+  display:inline-flex;align-items:center;gap:12px;
+  background:var(--ouro);color:#141210;text-decoration:none;
+  font-weight:600;font-size:1.02rem;padding:17px 30px;border-radius:2px;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.botao:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(200,164,92,.28)}
+.botao.fantasma{background:transparent;color:var(--creme);border:1px solid rgba(243,237,228,.28)}
+
+
+/* ─── 3. A FAIXA QUE ANDA ────────────────────────────────────
+   Custa quase nada e dá movimento à página inteira. O truque é
+   repetir o texto duas vezes e mover 50%: o corte não aparece. */
+.faixa{border-block:1px solid rgba(243,237,228,.12);padding:16px 0;overflow:hidden;background:var(--carvao)}
+.faixa .trilho{display:flex;gap:44px;width:max-content;animation:anda 26s linear infinite}
+.faixa span{font-family:var(--titulo);font-size:1.5rem;letter-spacing:.06em;color:var(--cinza);white-space:nowrap}
+.faixa span b{color:var(--ouro);font-weight:400}
+@keyframes anda{to{transform:translateX(-50%)}}
+
+
+/* ─── 4. AS SEÇÕES ───────────────────────────────────────────  */
+section{padding:90px 0}
+.titulo-secao{font-size:clamp(2.2rem,6vw,3.6rem);margin-bottom:8px}
+.sub-secao{color:var(--cinza);margin-bottom:44px;max-width:48ch}
+
+/* Preço: a informação que a pessoa mais procura e que quase
+   nenhuma barbearia coloca no site. Colocar vende. */
+.precos{display:grid;gap:0}
+.item{
+  display:grid;grid-template-columns:1fr auto;gap:8px 24px;align-items:baseline;
+  padding:22px 0;border-bottom:1px solid rgba(243,237,228,.10);
+}
+.item h3{font-size:1.6rem}
+.item p{grid-column:1/-1;color:var(--cinza);font-size:.94rem;margin-top:-4px}
+.item .valor{font-family:var(--titulo);font-size:1.9rem;color:var(--ouro);font-variant-numeric:tabular-nums}
+
+/* Horário e endereço, lado a lado. */
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:34px}
+.info h3{font-size:1.35rem;color:var(--ouro);margin-bottom:12px}
+.info p{color:var(--cinza)}
+.info b{color:var(--creme);font-weight:600}
+
+
+/* ─── 5. APARECER AO ROLAR ───────────────────────────────────
+   Regra de ouro: o estado NORMAL é visível. Se o JavaScript
+   falhar, a página aparece inteira do mesmo jeito. Só quem tem
+   JS ativo ganha o efeito.                                    */
+.sobe{opacity:1;transform:none;transition:opacity .7s ease, transform .7s ease}
+.js .sobe{opacity:0;transform:translateY(26px)}
+.js .sobe.visivel{opacity:1;transform:none}
+
+
+/* ─── 6. O BOTÃO FIXO DO WHATSAPP ────────────────────────────
+   Fica sempre na tela. É o que transforma visita em conversa. */
+.zap{
+  position:fixed;right:18px;bottom:18px;z-index:50;
+  display:flex;align-items:center;gap:10px;
+  background:#25d366;color:#06281a;text-decoration:none;font-weight:600;
+  padding:14px 20px;border-radius:100px;box-shadow:0 10px 28px rgba(0,0,0,.45);
+}
+.zap svg{width:20px;height:20px;fill:currentColor}
+
+footer{border-top:1px solid rgba(243,237,228,.12);padding:34px 0 110px;color:var(--cinza);font-size:.86rem}
+
+@media (max-width:600px){
+  section{padding:64px 0}
+  .item h3{font-size:1.35rem}
+  .zap span{display:none}       /* no celular fica só o ícone redondo */
+  .zap{padding:16px;border-radius:50%}
+}
+@media (prefers-reduced-motion:reduce){
+  .faixa .trilho{animation:none}
+  .js .sobe{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── CAPA ─────────────────────────────────────────────── -->
+<header class="capa">
+  <div class="dentro">
+    <p class="olho">Centro · desde 2019</p>              <!-- ← TROCAR -->
+    <h1>Navalha<br><em>&amp; Osso</em></h1>              <!-- ← TROCAR -->
+    <p class="frase">Corte, barba e navalha. Hora marcada, sem fila
+    e sem espera na calçada.</p>                          <!-- ← TROCAR -->
+    <p>
+      <a class="botao" href="https://wa.me/5511999999999?text=Oi!%20Quero%20marcar%20um%20hor%C3%A1rio."
+         target="_blank" rel="noopener">Marcar horário →</a>
+      <!-- ← TROCAR o número. Formato: 55 + DDD + numero, só dígitos.
+           O ?text= já deixa a mensagem escrita pro cliente só enviar. -->
+    </p>
+  </div>
+</header>
+
+<!-- ─── FAIXA QUE ANDA (o texto é repetido 2x de propósito) ── -->
+<div class="faixa" aria-hidden="true">
+  <div class="trilho">
+    <span>CORTE <b>·</b> BARBA <b>·</b> NAVALHA <b>·</b> PLATINADO <b>·</b> SOBRANCELHA <b>·</b></span>
+    <span>CORTE <b>·</b> BARBA <b>·</b> NAVALHA <b>·</b> PLATINADO <b>·</b> SOBRANCELHA <b>·</b></span>
+  </div>
+</div>
+
+<!-- ─── PREÇOS ───────────────────────────────────────────── -->
+<section>
+  <div class="dentro">
+    <h2 class="titulo-secao sobe">Serviços e preços</h2>
+    <p class="sub-secao sobe">Preço fechado, sem surpresa na hora de pagar.</p>
+
+    <div class="precos">
+      <div class="item sobe">
+        <h3>Corte</h3><span class="valor">R$ 45</span>
+        <p>Máquina, tesoura e finalização. Leva 40 minutos.</p>
+      </div>
+      <div class="item sobe">
+        <h3>Barba</h3><span class="valor">R$ 35</span>
+        <p>Toalha quente, navalha e óleo. Leva 30 minutos.</p>
+      </div>
+      <div class="item sobe">
+        <h3>Corte + Barba</h3><span class="valor">R$ 70</span>
+        <p>Os dois na mesma cadeira, com desconto. Uma hora e dez.</p>
+      </div>
+      <div class="item sobe">
+        <h3>Sobrancelha</h3><span class="valor">R$ 15</span>
+        <p>Na navalha, sem pinça. Dez minutos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HORÁRIO E ENDEREÇO ───────────────────────────────── -->
+<section>
+  <div class="dentro">
+    <h2 class="titulo-secao sobe">Onde e quando</h2>
+    <div class="info">
+      <div class="sobe">
+        <h3>Horário</h3>
+        <p><b>Terça a sexta</b><br>9h às 20h</p>
+        <p style="margin-top:12px"><b>Sábado</b><br>8h às 18h</p>
+        <p style="margin-top:12px">Domingo e segunda fechado</p>
+      </div>
+      <div class="sobe">
+        <h3>Endereço</h3>
+        <p><b>Rua Exemplo, 100</b><br>Centro</p>      <!-- ← TROCAR -->
+        <p style="margin-top:12px">Em cima da padaria, portão azul.</p>
+      </div>
+      <div class="sobe">
+        <h3>Pagamento</h3>
+        <p>Pix, débito, crédito e dinheiro.</p>
+        <p style="margin-top:12px"><b>Sem taxa</b> no crédito até 2x.</p>
+      </div>
+    </div>
+    <p style="margin-top:40px">
+      <a class="botao fantasma" href="https://maps.google.com/?q=Rua+Exemplo+100"
+         target="_blank" rel="noopener">Ver no mapa →</a>
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="dentro">
+    <p><b style="color:var(--creme)">Navalha &amp; Osso</b> — barbearia fictícia,
+    criada como demonstração. Nenhum negócio real é representado aqui.</p>
+    <p style="margin-top:8px">Página feita por João · <a href="../../" style="color:var(--ouro)">ver mais trabalhos</a></p>
+  </div>
+</footer>
+
+<!-- O botão que fica sempre na tela -->
+<a class="zap" href="https://wa.me/5511999999999?text=Oi!%20Quero%20marcar%20um%20hor%C3%A1rio."
+   target="_blank" rel="noopener" aria-label="Chamar no WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1112 20zm4.4-5.8c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 01-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.2.1-.3 0-.5l-.7-1.7c-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.5.1-.7.3-.8.8-1 1.9-.4 3.1a9.6 9.6 0 004.4 4.3c1.6.7 2.6.6 3.4.4.5-.1 1.4-.6 1.6-1.2.2-.6.2-1 .1-1.1l-.6-.7z"/></svg>
+  <span>WhatsApp</span>
+</a>
+
+<script>
+/* Só liga o efeito se o JavaScript rodar. Se falhar, a classe
+   nunca entra e tudo continua visível — nada some da página. */
+document.documentElement.classList.add('js');
+
+/* IntersectionObserver: o navegador avisa quando o elemento
+   entra na tela. Muito mais leve que ficar medindo no scroll. */
+const olheiro = new IntersectionObserver((entradas) => {
+  entradas.forEach((e) => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visivel');
+      olheiro.unobserve(e.target);   // já apareceu, para de vigiar
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.sobe').forEach((el, i) => {
+  el.style.transitionDelay = (i % 4) * 70 + 'ms';   // entram em cascata
+  olheiro.observe(el);
+});
+</script>
+</body>
+</html>
