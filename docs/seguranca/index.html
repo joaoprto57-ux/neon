@@ -54,21 +54,21 @@
 
         /* --- HERO SECTION --- */
         .hero { position: relative; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; padding: 0 20px; }
-        .hero h1 { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 20px; }
-        .hero p { max-width: 600px; color: var(--text-gray); font-size: 1.1rem; line-height: 1.6; }
+        .hero h1 { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 900; letter-spacing: -0.025em; line-height: 1.02; margin-bottom: 24px; text-wrap: balance; }
+        .hero p { max-width: 46ch; color: var(--text-gray); font-size: 1.1rem; line-height: 1.6; margin: 0 auto; }
 
         /* --- TIMELINE SECTION --- */
         .timeline { position: relative; z-index: 10; padding: 100px 5%; max-width: 1200px; margin: 0 auto; }
         .timeline-header { margin-bottom: 80px; background: rgba(0,0,0,.75); padding-top: 12px; padding-bottom: 12px; border-left: 2px solid var(--neon-green); padding-left: 30px; }
-        .timeline-header h2 { font-family: 'Playfair Display'; font-size: 3rem; margin-bottom: 15px; }
+        .timeline-header h2 { font-family: 'Playfair Display'; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 15px; text-wrap: balance; }
 
         /* --- LESSON GRID --- */
         .lesson-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; }
         .lesson-card { background: rgba(10,10,12,0.88); backdrop-filter: blur(6px); /* era 0.03: a lua explodida atravessava e o texto sumia */ border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 4px; cursor: pointer; transition: 0.4s; position: relative; overflow: hidden; }
         .lesson-card:hover { border-color: var(--neon-green); transform: translateY(-10px); background: rgba(18,20,24,0.94); }
-        .lesson-card h3 { font-size: 1.5rem; margin-bottom: 15px; font-weight: 800; }
-        .lesson-card .tag { font-family: 'Fira Code'; font-size: 0.7rem; color: var(--neon-green); margin-bottom: 20px; display: block; }
-        .lesson-card p { color: var(--text-gray); font-size: 0.95rem; line-height: 1.5; }
+        .lesson-card h3 { font-size: 1.45rem; margin-bottom: 14px; font-weight: 700; line-height: 1.22; letter-spacing: -0.01em; text-wrap: balance; }
+        .lesson-card .tag { font-family: 'Fira Code'; font-size: 0.7rem; letter-spacing: 0.06em; color: var(--neon-green); margin-bottom: 18px; display: block; }
+        .lesson-card p { color: #a9adb6; font-size: 0.95rem; line-height: 1.55; }
 
         /* --- GLITCH TRANSITION --- */
     </style>

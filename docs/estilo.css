@@ -385,3 +385,39 @@ figure.tela figcaption b{ color: var(--dim); font-weight: 700; }
 
 /* Uma foto sozinha, ocupando a coluna toda. */
 figure.tela.larga{ grid-column: 1 / -1; max-width: 420px; }
+
+
+/* ------------------------------------------------------------
+   9) A NAVEGAÇÃO DO FIM DA AULA
+
+   Quem termina de ler está lá embaixo. Obrigar a pessoa a rolar
+   tudo de volta para achar um link pequeno no topo é o jeito
+   mais fácil de perder o leitor no fim — justamente quando ele
+   gostou o suficiente para chegar até ali.
+   ------------------------------------------------------------ */
+
+.navega{
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px;
+  align-items: center;
+  margin-top: 54px; padding-top: 20px;
+  border-top: 1px solid var(--linha-forte);
+  font-family: var(--mono); font-size: 12px; line-height: 1.5;
+}
+.navega a{ text-decoration: none; color: var(--dim); }
+.navega a:hover{ color: var(--azul); }
+.navega .anterior{ text-align: left; }
+.navega .proxima { text-align: right; }
+.navega .todas{
+  text-align: center; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--fraco);
+}
+.navega .rot{
+  display: block; font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--fraco); margin-bottom: 3px;
+}
+.navega span.vazio{ color: transparent; }
+
+@media (max-width:600px){
+  .navega{ grid-template-columns: 1fr; gap: 14px; text-align: left; }
+  .navega .proxima, .navega .todas{ text-align: left; }
+}
