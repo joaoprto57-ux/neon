@@ -327,12 +327,26 @@ body.tem-lua{ background: var(--ceu); }
 .desce span{ animation: respira 2.4s ease-in-out infinite; }
 @keyframes respira{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(4px) } }
 
-/* A folha da aula: opaca, e é ela que cobre a lua ao subir. */
+/* A folha da aula: opaca, e é ela que cobre a lua ao subir.
+
+   Ela ocupa a LARGURA TODA da tela — senão, num monitor grande,
+   sobra um mar de preto dos dois lados e a leitura fica espremida
+   numa tirinha no meio.
+
+   O texto continua com 790px, mas quem segura essa largura agora
+   é o padding, não o max-width. Assim o papel vai de ponta a
+   ponta e a coluna de leitura fica no meio dele. */
 body.tem-lua .folha{
   position: relative; z-index: 1;
   background: var(--papel);
-  padding-top: 54px;
   box-shadow: 0 -40px 80px rgba(0,0,0,.5);
+
+  max-width: none;
+  margin: 0;
+  padding-top: 54px;
+  padding-bottom: 90px;
+  padding-left:  max(26px, calc((100% - 790px) / 2));
+  padding-right: max(26px, calc((100% - 790px) / 2));
 }
 
 /* Com a capa em cima, a primeira seção não precisa da borda antiga. */
