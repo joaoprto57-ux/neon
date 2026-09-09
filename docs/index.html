@@ -319,7 +319,7 @@
 
       const base = gerarTexturaLua(1024);
       const loader = new THREE.TextureLoader(); loader.setCrossOrigin("anonymous");
-      loader.load("https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg",
+      loader.load("lua.jpg",
         (t) => { if (material) material.uniforms.uTexture.value = t; }, undefined, () => {});
 
       const geo = new THREE.IcosahedronGeometry(2, 14).toNonIndexed();
