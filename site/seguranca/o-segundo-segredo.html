@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O segundo segredo</title>
+<meta name="description" content="O .env estava protegido. E ainda faltava um arquivo — sem senha nenhuma dentro, e mesmo assim segredo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow">Núcleo de Segurança Neon · aula 06</p>
+  <h1>O segundo segredo</h1>
+  <p class="sub">O <code>.env</code> estava protegido. Os e-mails também. E ainda
+  faltava um arquivo — que não tem senha nenhuma dentro, e mesmo assim é segredo.</p>
+</header>
+
+<section>
+  <p class="eyebrow">a receita, igual em toda aula</p>
+  <div class="receita">
+    <div><b style="color:var(--vermelho)">1 · o erro</b><p>O código errado, como quase todo mundo faz.</p></div>
+    <div><b>2 · o porquê</b><p>Por que aquilo é perigoso, em português.</p></div>
+    <div><b style="color:var(--verde)">3 · a correção</b><p>O código certo.</p></div>
+    <div><b>4 · a prova</b><p>O terminal respondendo.</p></div>
+  </div>
+</section>
+
+<section>
+  <article class="peca">
+    <h3><span class="n">06</span> O arquivo que ninguém tinha olhado</h3>
+    <p class="conceito">conferir antes de publicar, sempre</p>
+
+    <div class="passo"><div class="rot erro">1 · o erro</div><div>
+      <p>Achar que acabou. A senha saiu do código, o <code>.env</code> está no
+      <code>.gitignore</code>, o <code>git status</code> não mostra nada de
+      constrangedor. Hora de publicar.</p>
+      <p>Só que o <code>git status</code> mostra o que <b>mudou</b>, não o que
+      é <b>perigoso</b>. E tinha um arquivo parado ali no meio:</p>
+      <pre class="antes"><code>neon_sentinela_estado.json   <span class="com"># não rastreado, e não ignorado</span></code></pre>
+      <p>Esse é o estado mais fácil de não ver. Não está sendo versionado, então
+      não aparece em nenhum <code>diff</code>. Mas também não está ignorado —
+      então na hora do <code>git add .</code> ele entra junto, calado.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot">2 · o porquê</div><div>
+      <p>Abra o arquivo e não tem uma senha. Não tem token, não tem chave de API.
+      Um verificador de segredo automático passaria batido.</p>
+      <p>Tem isto — a forma do arquivo, com os valores retirados:</p>
+      <pre class="antes"><code>timestamp
+resumo:      total, established, listen, externas
+destinos:    [13 itens]
+                 ip, conexoes, processos[], portas[]
+vizinhos:    [2 itens]
+                 ip, mac, iface</code></pre>
+      <p>Treze endereços que esta máquina procurou, com o nome do programa que
+      procurou e a porta que usou. E dois vizinhos de rede, com o
+      <b>endereço MAC</b> de cada um — o número de fábrica da placa, que não
+      muda quando você troca de Wi-Fi.</p>
+      <p>Isso não abre nada. Isso <b>conta</b>: onde você mora, que aparelhos tem
+      em casa, que programas usa, a que horas. Um invasor não precisa da sua
+      senha se já sabe por onde você anda.</p>
+      <p><b>Segredo não é só senha. É qualquer arquivo que fale da sua vida.</b></p>
+    </div></div>
+
+    <div class="passo"><div class="rot ok">3 · a correção</div><div>
+      <p>Três linhas no <code>.gitignore</code> — e duas delas são comentário,
+      de propósito. Daqui a seis meses ninguém lembra por que essa linha existe,
+      e uma linha sem motivo é uma linha que alguém apaga:</p>
+      <pre class="depois"><code><span class="com"># Estado do sentinela: guarda os IPs reais que esta máquina acessou,</span>
+<span class="com"># com processo e porta. É telemetria da sua rede — não vai pro repo.</span>
+neon_sentinela_estado.json</code></pre>
+    </div></div>
+
+    <div class="passo"><div class="rot">4 · a prova</div><div>
+      <p>Não confira com o olho. O olho cansa e o <code>.gitignore</code> tem
+      regra que se cancela. Pergunte pro próprio Git, uma vez por arquivo:</p>
+      <pre class="depois"><code>for f in .env neon_security.log emails_*.json neon_sentinela_estado.json; do
+  git check-ignore -q "$f" &amp;&amp; echo "$f  ok" || echo "$f  ENTRA"
+done</code></pre>
+      <p>A resposta de verdade, rodada no repositório antes de publicar:</p>
+      <pre class="saida"><code>.env                             ok
+neon_security.log                ok
+emails_conteudo_completo.json    ok
+emails_extraidos.json            ok
+neon_sentinela_estado.json       ok</code></pre>
+      <p>Cinco <code>ok</code>. Qualquer <code>ENTRA</code> nessa lista é um
+      arquivo que vai subir junto com o próximo commit.</p>
+    </div></div>
+
+    <p class="fonte">arquivo · <b>.gitignore</b> linhas 24–26 &nbsp;·&nbsp;
+    aconteceu em <b>5 de setembro de 2026</b>, revisando o repositório para publicar</p>
+  </article>
+</section>
+
+<section>
+  <p class="eyebrow">o detalhe que engana todo mundo</p>
+  <h2>Um arquivo tem três estados, não dois</h2>
+  <p class="intro">Quase todo tutorial fala de dois. O terceiro é onde mora o
+  acidente.</p>
+  <ul class="regras">
+    <li><b>rastreado</b><span>O Git já conhece e guarda o histórico. Se tinha
+    senha aqui um dia, ela continua no commit velho — apagar agora não resolve.</span></li>
+    <li><b>ignorado</b><span>Está no <code>.gitignore</code>. Existe no seu
+    computador e o Git não enxerga. É onde o <code>.env</code> tem que estar.</span></li>
+    <li><b>nem um nem outro</b><span>Existe, não é versionado, não é ignorado.
+    Fica invisível até o dia do <code>git add .</code> — e aí entra sem avisar.
+    <b>É este que vaza.</b></span></li>
+  </ul>
+</section>
+
+<section>
+  <p class="eyebrow">para levar</p>
+  <p class="regra-final">No Git não existe apagar. Por isso a regra não é tirar o
+  segredo depois — é não deixar entrar nem uma vez. E conferir com um comando,
+  nunca com a memória.</p>
+</section>
+
+<p class="fim">Núcleo de Segurança Neon · aula 06 de 6 · todo código desta página
+foi copiado de um arquivo real do projeto — nenhum exemplo foi inventado</p>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O que o Git não pode ver</title>
+<meta name="description" content="No Git não existe apagar. Por isso a regra não é tirar o segredo depois — é não deixar entrar nem uma vez.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow">Núcleo de Segurança Neon · aula 05</p>
+  <h1>O que o Git não pode ver</h1>
+  <p class="sub">No Git não existe apagar. Por isso a regra não é tirar o segredo
+  depois — é não deixar entrar nem uma vez.</p>
+</header>
+
+<section>
+  <p class="eyebrow">a receita, igual em toda aula</p>
+  <div class="receita">
+    <div><b style="color:var(--vermelho)">1 · o erro</b><p>O código errado, como quase todo mundo faz.</p></div>
+    <div><b>2 · o porquê</b><p>Por que aquilo é perigoso, em português.</p></div>
+    <div><b style="color:var(--verde)">3 · a correção</b><p>O código certo.</p></div>
+    <div><b>4 · a prova</b><p>O terminal respondendo.</p></div>
+  </div>
+</section>
+
+<section>
+  <article class="peca">
+    <h3><span class="n">05</span> Confiar na memória</h3>
+    <p class="conceito">impedir a entrada, não remover depois</p>
+
+    <div class="passo"><div class="rot erro">1 · o erro</div><div>
+      <p>Não tem código para mostrar aqui, e é esse o ponto. O erro é uma
+      intenção:</p>
+      <pre class="antes"><code>git add .</code></pre>
+      <p>Você sabe que o <code>.env</code> não pode subir. Sabe hoje, sabe
+      amanhã. Um dia você está com pressa, resolvendo outra coisa, e digita esse
+      ponto. Ele quer dizer <em>tudo</em>.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot">2 · o porquê</div><div>
+      <p>O Git foi feito para <b>não</b> esquecer. Essa é a qualidade dele, e é
+      exatamente o que o torna implacável com segredo.</p>
+      <p>Se a senha entrou num commit, apagar o arquivo depois não resolve: o
+      commit antigo continua no histórico. Quem clonar leva. Quem já clonou,
+      já tem. Se o repositório passou um minuto público, considere o segredo
+      queimado — não existe desfazer, só existe <b>trocar</b>.</p>
+      <p>É por isso que a ordem certa é sempre a mesma, e ela não é intuitiva:</p>
+      <ul class="regras">
+        <li><b>1 · trocar</b><span>Gere uma senha nova. O segredo antigo está
+        comprometido no momento em que virou público — nenhuma limpeza de
+        histórico desfaz isso.</span></li>
+        <li><b>2 · ignorar</b><span>Só depois arrume o <code>.gitignore</code>,
+        para o novo não seguir o caminho do velho.</span></li>
+      </ul>
+      <p>Quem faz na ordem inversa passa horas reescrevendo histórico para
+      esconder uma senha que continua valendo.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot ok">3 · a correção</div><div>
+      <p>Quatro linhas no <code>.gitignore</code>. A última é a que quase ninguém
+      escreve:</p>
+      <pre class="depois"><code><span class="com"># Environment variables</span>
+.env
+.env.local
+.env.production
+!.env.example</code></pre>
+      <p>A exclamação é uma <b>exceção</b>: "ignore tudo que combina com o de
+      cima, menos este". Sem ela, o <code>.env.example</code> — o formulário em
+      branco que todo mundo precisa — seria bloqueado junto e ninguém
+      conseguiria configurar o projeto.</p>
+      <p>E a regra vale para além de senha. Qualquer arquivo que fale da sua vida
+      entra na lista, com o motivo escrito ao lado para ninguém apagar depois:</p>
+      <pre class="depois"><code><span class="com"># Dados extraídos (contêm conteúdo real de e-mail — NUNCA versionar)</span>
+emails_*.json
+quarentena/</code></pre>
+    </div></div>
+
+    <div class="passo"><div class="rot">4 · a prova</div><div>
+      <p>Não confira com o olho. As regras do <code>.gitignore</code> se
+      sobrepõem e uma exceção pode cancelar a outra sem avisar. Pergunte ao
+      próprio Git qual regra pegou o arquivo:</p>
+      <pre class="depois"><code>git check-ignore -v .env</code></pre>
+      <p>A resposta real, neste repositório:</p>
+      <pre class="saida"><code>.gitignore:15:.env	.env</code></pre>
+      <p>Lê-se: o arquivo <code>.env</code> foi bloqueado pela regra escrita na
+      <b>linha 15</b> do <code>.gitignore</code>. Não é opinião — é o Git
+      dizendo quem mandou.</p>
+      <p>Se o comando não responder nada, o arquivo <b>não</b> está ignorado. O
+      silêncio aqui é a má notícia.</p>
+      <p>E a frase que fecha a aula, dita na frente da tela:
+      <em>o <code>.env</code> existe no meu computador, mas o Git não enxerga
+      ele.</em></p>
+    </div></div>
+
+    <p class="fonte">arquivo · <b>.gitignore</b> linhas 14–18</p>
+  </article>
+</section>
+
+<section>
+  <p class="eyebrow">para levar</p>
+  <p class="regra-final">No Git não existe apagar, existe trocar. E a única
+  conferência que vale é a que um comando faz por você — a memória é justamente
+  a peça que falha no dia em que você está com pressa.</p>
+</section>
+
+<p class="fim">Núcleo de Segurança Neon · aula 05 de 6 · todo código desta página
+foi copiado de um arquivo real do projeto — nenhum exemplo foi inventado</p>
+
+</div>
+</body>
+</html>

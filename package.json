@@ -1,0 +1,97 @@
+{
+  "name": "neon",
+  "version": "1.0.0",
+  "description": "Painel local de vigilância de rede, processos de IA e triagem de e-mail",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "lint": "tsc --noEmit",
+    "app": "npm run build && env -u ELECTRON_RUN_AS_NODE electron .",
+    "dist": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --linux AppImage deb",
+    "dist:appimage": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --linux AppImage"
+  },
+  "keywords": [
+    "seguranca",
+    "monitoramento",
+    "electron",
+    "painel"
+  ],
+  "author": {
+    "name": "Joao",
+    "email": "joaoprto57@gmail.com"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "monaco-editor": "^0.52.2",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.4.1",
+    "electron": "^44.2.0",
+    "electron-builder": "^26.0.0",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "build": {
+    "appId": "com.joao.neon",
+    "productName": "Neon",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "dist/**/*",
+      "public/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": ".",
+        "to": "python",
+        "filter": [
+          "neon_*.py",
+          "requirements.txt",
+          ".env.example"
+        ]
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "System",
+      "synopsis": "Painel local de vigilância",
+      "description": "Monitora conexões de rede, processos de IA e e-mail, com terminal integrado.",
+      "desktop": {
+        "entry": {
+          "Name": "Neon",
+          "Comment": "Painel local de vigilância",
+          "Categories": "System;Monitor;Security;"
+        }
+      },
+      "maintainer": "Joao <joaoprto57@gmail.com>"
+    },
+    "deb": {
+      "depends": [
+        "python3",
+        "python3-psutil",
+        "util-linux",
+        "network-manager"
+      ]
+    }
+  },
+  "homepage": "https://github.com/joao/neon"
+}

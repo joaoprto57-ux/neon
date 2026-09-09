@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+release/
+public/vendor/
+__pycache__/
+package-lock.json
+*.log
+emails_*.json

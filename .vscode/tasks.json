@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$tsc"],
+      "label": "npm: build",
+      "detail": "tsc → dist/"
+    },
+    {
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Neon rodando em"
+        }
+      },
+      "label": "npm: dev",
+      "detail": "tsx watch src/server.ts",
+      "presentation": { "panel": "dedicated", "reveal": "always" }
+    },
+    {
+      "type": "npm",
+      "script": "lint",
+      "group": "test",
+      "problemMatcher": ["$tsc"],
+      "label": "npm: lint",
+      "detail": "tsc --noEmit (checagem de tipos)"
+    },
+    {
+      "type": "npm",
+      "script": "app",
+      "problemMatcher": [],
+      "label": "npm: app",
+      "detail": "build + electron"
+    },
+    {
+      "type": "npm",
+      "script": "dist",
+      "problemMatcher": [],
+      "label": "npm: dist",
+      "detail": "empacota AppImage + deb em release/"
+    },
+    {
+      "label": "python: watchdog",
+      "type": "shell",
+      "command": "python3 neon_watchdog.py",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated" }
+    }
+  ]
+}

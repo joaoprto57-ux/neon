@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>As janelas da máquina</title>
+<meta name="description" content="Quantas portas o seu computador tem abertas agora? A primeira aula do curso é a pergunta que quase ninguém sabe responder.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow">Núcleo de Segurança Neon · aula 01</p>
+  <h1>As janelas da máquina</h1>
+  <p class="sub">Quantas portas o seu computador tem abertas agora? Quase ninguém
+  sabe responder — e essa é a aula inteira.</p>
+</header>
+
+<section>
+  <p class="eyebrow">a receita, igual em toda aula</p>
+  <div class="receita">
+    <div><b style="color:var(--vermelho)">1 · o erro</b><p>O código errado, como quase todo mundo faz.</p></div>
+    <div><b>2 · o porquê</b><p>Por que aquilo é perigoso, em português.</p></div>
+    <div><b style="color:var(--verde)">3 · a correção</b><p>O código certo.</p></div>
+    <div><b>4 · a prova</b><p>O terminal respondendo.</p></div>
+  </div>
+</section>
+
+<section>
+  <article class="peca">
+    <h3><span class="n">01</span> A lista escrita à mão</h3>
+    <p class="conceito">superfície de ataque</p>
+
+    <div class="passo"><div class="rot erro">1 · o erro</div><div>
+      <p>Este foi o primeiro programa do projeto. Dezoito linhas, escritas para
+      responder aquela pergunta — e ele funciona:</p>
+      <pre class="antes"><code>import socket
+
+alvo = "127.0.0.1"
+portas = [21, 22, 80, 443, 5432]
+
+for porta in portas:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(0.5)
+
+    codigo_retorno = s.connect_ex((alvo, porta))
+
+    if codigo_retorno == 0:
+        print(f"Alvo: {alvo} | Porta {porta}: [ ABERTA ]")
+    else:
+        print(f"Alvo: {alvo} | Porta {porta}: [ FECHADA ]")
+
+    s.close()</code></pre>
+      <p>O erro não está em nenhuma linha. Está na <b>linha 4</b>:</p>
+      <pre class="antes"><code>portas = [21, 22, 80, 443, 5432]</code></pre>
+      <p>Essa lista foi escrita à mão. Ela só contém as portas em que alguém já
+      tinha pensado.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot">2 · o porquê</div><div>
+      <p>Porta aberta é um programa esperando conexão. É uma janela: alguém do
+      lado de fora pode bater. Se o programa que atende tiver um defeito, é por
+      ali que se entra.</p>
+      <p>Um scanner de lista fixa responde <em>"as cinco que você perguntou estão
+      assim"</em>. Mas a porta que derruba uma máquina é quase sempre a que o dono
+      não sabia que existia — aberta por um programa que ele instalou e esqueceu.</p>
+      <p>E tem uma diferença que decide tudo, escrita no endereço:</p>
+      <ul class="regras">
+        <li><b>127.0.0.1:5432</b><span>Só a própria máquina alcança. É uma porta
+        para dentro de casa — o Postgres, aqui, está assim.</span></li>
+        <li><b>0.0.0.0:8777</b><span>Qualquer aparelho na mesma rede alcança. O
+        <code>0.0.0.0</code> quer dizer <em>"por todas as entradas"</em>. É porta
+        para a rua.</span></li>
+      </ul>
+      <p>O mesmo programa, o mesmo código, com uma diferença de endereço — e um
+      está disponível para a casa inteira do vizinho.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot ok">3 · a correção</div><div>
+      <p>Não adivinhe a lista. O sistema já tem ela inteira e responde na hora:</p>
+      <pre class="depois"><code>ss -tulpn | grep LISTEN</code></pre>
+      <p>Lê-se: mostre os soquetes <code>t</code>cp e <code>u</code>dp que estão
+      escutando (<code>l</code>), com o <code>p</code>rograma dono de cada um e o
+      <code>n</code>úmero da porta sem traduzir para nome.</p>
+      <p>Decore este comando. Rode de novo toda vez que instalar qualquer coisa —
+      é aí que aparecem as janelas que você não abriu de propósito.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot">4 · a prova</div><div>
+      <p>O scanner de lista fixa, rodando de verdade. Cinco portas perguntadas,
+      uma aberta:</p>
+      <pre class="saida"><code>$ python3 neon_core.py
+Alvo: 127.0.0.1 | Porta 21: [ FECHADA ]
+Alvo: 127.0.0.1 | Porta 22: [ FECHADA ]
+Alvo: 127.0.0.1 | Porta 80: [ FECHADA ]
+Alvo: 127.0.0.1 | Porta 443: [ FECHADA ]
+Alvo: 127.0.0.1 | Porta 5432: [ ABERTA ]</code></pre>
+      <p>Conclusão do scanner: uma janela aberta. Agora a mesma máquina,
+      no mesmo dia, perguntando para o sistema em vez de adivinhar:</p>
+      <pre class="saida"><code>$ ss -tulpn | grep -c LISTEN
+20</code></pre>
+      <p><b>Vinte.</b> O scanner tinha achado uma. Ele não errou — ele respondeu
+      exatamente o que foi perguntado. A lista curta era a pergunta curta.</p>
+      <p>Das vinte, dezenove estavam em <code>127.0.0.1</code>, portas para
+      dentro. Uma estava em <code>0.0.0.0</code>, porta para a rua — e era um
+      programa do próprio dono, ligado com uma opção <code>--rede</code> que ele
+      mesmo digitou, semanas antes, para abrir o painel pelo celular.</p>
+      <p>Não era invasão. Era uma escolha antiga que ninguém tinha revisto.</p>
+    </div></div>
+
+    <p class="fonte">o scanner das 18 linhas existe hoje só na captura de tela de
+    <b>4 de setembro de 2026, 10:06</b> — foi reescrito no mesmo arquivo no dia
+    seguinte. A saída acima é a da captura das <b>10:00</b>.</p>
+  </article>
+</section>
+
+<section>
+  <p class="eyebrow">antes de publicar esta página</p>
+  <h2>O que foi apagado daqui</h2>
+  <p class="intro">Uma aula sobre não vazar segredo não pode vazar o segredo de
+  quem escreve. A lista completa das vinte portas <b>não</b> está nesta página:
+  ela diz quais programas rodam nesta máquina e por onde entrar em cada um.</p>
+  <p class="intro">Ficou o número, que ensina, e sumiu o mapa, que entrega. Essa
+  decisão é a aula 06 — e você toma ela toda vez que publica uma foto do seu
+  terminal.</p>
+</section>
+
+<section>
+  <p class="eyebrow">para levar</p>
+  <p class="regra-final">Porta aberta quase nunca é invasão. É escolha — sua,
+  antiga, esquecida. O trabalho não é fechar tudo: é conseguir explicar, uma por
+  uma, por que cada janela está aberta.</p>
+</section>
+
+<p class="fim">Núcleo de Segurança Neon · aula 01 de 6 · todo código desta página
+foi copiado de um arquivo real do projeto — nenhum exemplo foi inventado</p>
+
+</div>
+
+</body>
+</html>

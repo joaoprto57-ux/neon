@@ -1,0 +1,2917 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon</title>
+<link rel="stylesheet" href="/vendor/xterm.css">
+<style>
+  :root{
+    --fundo:#0b0d12; --sup:#12151d; --sup2:#171b25; --borda:#232936;
+    --borda-viva:#2e3644;
+    --txt:#e6ebf4; --dim:#8b97ab; --fraco:#5a6678;
+    --ciano:#38bdf8; --verde:#34d399; --ambar:#fbbf24;
+    --rosa:#fb7185; --violeta:#a78bfa;
+    --mono:'JetBrains Mono','Fira Code',ui-monospace,'SF Mono',Menlo,monospace;
+    --ui:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  /* Sem isto, um display: no CSS vence o atributo hidden e o elemento
+     "escondido" continua aparecendo — era o que acontecia com a barra
+     de colar código do Bot. */
+  [hidden]{display:none !important}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--fundo); color:var(--txt);
+    font-family:var(--ui); font-size:13px; line-height:1.5;
+    display:flex; flex-direction:column; overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--borda-viva); border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:#3b4553}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* ── Cabeçalho ─────────────────────────────────────────── */
+  header{
+    display:flex; align-items:center; gap:14px; padding:0 18px; height:52px;
+    background:linear-gradient(180deg,#151924,#11141c);
+    border-bottom:1px solid var(--borda); flex:none;
+  }
+  .marca{display:flex; align-items:baseline; gap:8px}
+  .marca b{
+    font-size:16px; font-weight:800; letter-spacing:.2em;
+    background:linear-gradient(92deg,var(--ciano),var(--violeta));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .marca i{font-style:normal; color:var(--fraco); font-size:11px; letter-spacing:.1em}
+  .viva{display:flex; align-items:center; gap:7px; padding:4px 10px;
+        background:var(--sup2); border:1px solid var(--borda); border-radius:20px}
+  .ponto{width:7px;height:7px;border-radius:50%;background:var(--fraco);flex:none}
+  .ponto.on{background:var(--verde); box-shadow:0 0 8px var(--verde); animation:bate 2.4s infinite}
+  .ponto.err{background:var(--rosa); box-shadow:0 0 8px var(--rosa)}
+  @keyframes bate{0%,100%{opacity:1}50%{opacity:.35}}
+  .viva span{font-size:11px; color:var(--dim); font-family:var(--mono)}
+  header .gap{flex:1}
+  .chip{
+    font-family:var(--mono); font-size:11px; color:var(--dim);
+    padding:4px 10px; background:var(--sup2);
+    border:1px solid var(--borda); border-radius:6px;
+  }
+  .chip b{color:var(--txt); font-weight:600}
+  button{
+    font-family:var(--ui); font-size:12px; font-weight:500; padding:6px 13px;
+    cursor:pointer; background:var(--sup2); color:var(--dim);
+    border:1px solid var(--borda); border-radius:7px; transition:.15s;
+  }
+  button:hover:not(:disabled){background:var(--borda); color:var(--txt); border-color:var(--borda-viva)}
+  button:disabled{opacity:.35; cursor:not-allowed}
+  button.p{background:rgba(56,189,248,.1); color:var(--ciano); border-color:rgba(56,189,248,.3)}
+  button.p:hover:not(:disabled){background:rgba(56,189,248,.18); color:#7dd3fc}
+  button.d:hover:not(:disabled){background:rgba(251,113,133,.15); color:var(--rosa); border-color:rgba(251,113,133,.35)}
+  button.mini{padding:3px 9px; font-size:11px; border-radius:6px}
+
+  /* ── Métricas ──────────────────────────────────────────── */
+  .metricas{display:grid; grid-template-columns:repeat(5,1fr); gap:11px; padding:13px 18px 0; flex:none}
+  .card{
+    position:relative; overflow:hidden; padding:12px 14px 10px;
+    background:linear-gradient(160deg,var(--sup),#10131a);
+    border:1px solid var(--borda); border-radius:var(--r);
+  }
+  .card .rot{color:var(--fraco); font-size:10px; letter-spacing:.14em;
+             text-transform:uppercase; font-weight:600}
+  .card .val{font-family:var(--mono); font-size:27px; font-weight:700;
+             margin-top:4px; line-height:1; letter-spacing:-.02em}
+  .card .sub{color:var(--dim); font-size:11px; margin-top:3px;
+             white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .card svg{position:absolute; right:0; bottom:0; width:74px; height:30px; opacity:.5}
+  .ciano{color:var(--ciano)} .verde{color:var(--verde)} .ambar{color:var(--ambar)}
+  .rosa{color:var(--rosa)} .violeta{color:var(--violeta)}
+
+  /* ── Layout ────────────────────────────────────────────── */
+  main{flex:1; display:grid; grid-template-columns:minmax(380px,1fr) minmax(520px,1.15fr);
+       gap:11px; padding:11px 18px 14px; min-height:0}
+  .col{display:flex; flex-direction:column; gap:11px; min-height:0}
+  .painel{
+    background:var(--sup); border:1px solid var(--borda); border-radius:var(--r);
+    display:flex; flex-direction:column; min-height:0; overflow:hidden;
+  }
+  .col > .painel:last-child{flex:1}
+  .cab{
+    display:flex; align-items:center; gap:9px; padding:0 13px; height:38px;
+    border-bottom:1px solid var(--borda); flex:none; background:var(--sup2);
+  }
+  .cab h2{margin:0; font-size:11px; font-weight:700; letter-spacing:.12em;
+          text-transform:uppercase; color:var(--dim)}
+  .cab .n{background:var(--fundo); color:var(--fraco); padding:1px 8px;
+          border-radius:20px; font-size:10px; font-family:var(--mono)}
+  .cab .gap{flex:1}
+  .corpo{overflow:auto; flex:1; min-height:0}
+  .vazio{color:var(--fraco); padding:26px 14px; text-align:center; font-size:12px}
+
+  /* Queda de conexão: impossível não ver. */
+  #sem-conexao{
+    position:fixed; top:0; left:0; right:0; z-index:9999;
+    background:var(--rosa); color:#0b0d12; text-align:center;
+    padding:7px 14px; font-family:var(--mono); font-size:12px;
+    font-weight:700; letter-spacing:.04em;
+  }
+  body.offline .painel{opacity:.55}
+
+  .item{padding:9px 13px; border-bottom:1px solid rgba(35,41,54,.6)}
+  .item:last-child{border-bottom:none}
+  .item:hover{background:var(--sup2)}
+  .item .l1{display:flex; gap:9px; align-items:center}
+  .item .nome{font-weight:600; font-size:12.5px}
+  .item .meta{margin-left:auto; color:var(--fraco); font-size:11px;
+              font-family:var(--mono); white-space:nowrap}
+  .item .l2{color:var(--dim); font-size:11px; margin-top:3px;
+            font-family:var(--mono); word-break:break-word}
+  .sev{font-size:9px; font-weight:700; padding:2px 7px; border-radius:5px; letter-spacing:.06em}
+  .sev.alta{background:rgba(251,113,133,.15); color:var(--rosa)}
+  .sev.media{background:rgba(251,191,36,.15); color:var(--ambar)}
+
+  table{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11.5px}
+  th{position:sticky; top:0; z-index:1; background:var(--sup2); text-align:left;
+     padding:7px 11px; color:var(--fraco); font-weight:600; font-size:10px;
+     letter-spacing:.1em; text-transform:uppercase; font-family:var(--ui);
+     border-bottom:1px solid var(--borda)}
+  td{padding:5px 11px; border-bottom:1px solid rgba(35,41,54,.45);
+     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px}
+  tbody tr:hover td{background:var(--sup2)}
+  input.busca{
+    background:var(--fundo); border:1px solid var(--borda); color:var(--txt);
+    font-family:var(--mono); font-size:11px; padding:5px 10px; border-radius:6px; width:210px;
+  }
+  input.busca:focus{outline:none; border-color:var(--ciano)}
+
+  /* ── Abas ──────────────────────────────────────────────── */
+  .abas{display:flex; gap:3px; overflow-x:auto; min-width:0; scrollbar-width:none}
+  .abas::-webkit-scrollbar{height:0}
+  .aba{
+    padding:5px 13px; font-size:11.5px; font-weight:600; cursor:pointer;
+    color:var(--fraco); border-radius:7px; border:1px solid transparent; transition:.15s;
+    white-space:nowrap; flex:none;
+  }
+  .aba:hover{color:var(--dim); background:var(--fundo)}
+  .aba.sel{color:var(--ciano); background:rgba(56,189,248,.1); border-color:rgba(56,189,248,.25)}
+  .pag{display:none; flex:1; min-height:0; flex-direction:column}
+  .pag.sel{display:flex}
+
+  #term{flex:1; min-height:0; padding:8px 4px 4px 10px; background:#070910}
+  .xterm-viewport::-webkit-scrollbar-thumb{background:var(--borda-viva)}
+
+  /* ── Lançadores de app ─────────────────────────────────── */
+  .lancadores{display:flex; gap:6px}
+  .lancadores button{display:flex; align-items:center; gap:6px}
+  .lancadores button::before{
+    content:''; width:6px; height:6px; border-radius:50%;
+    background:var(--verde); flex:none;
+  }
+  .lancadores button.off::before{background:var(--fraco)}
+  .lancadores button.off{opacity:.45}
+
+  /* ── Editor de código ──────────────────────────────────── */
+  .barra-ed{
+    display:flex; align-items:center; gap:7px; padding:7px 11px;
+    border-bottom:1px solid var(--borda); background:var(--sup2); flex:none;
+  }
+  .sel-lang{
+    background:var(--fundo); color:var(--txt); border:1px solid var(--borda);
+    border-radius:6px; padding:5px 9px; font-family:var(--mono); font-size:11.5px;
+    min-width:150px; cursor:pointer;
+  }
+  .sel-lang:focus{outline:none; border-color:var(--ciano)}
+  .sel-lang optgroup{color:var(--fraco); font-style:normal}
+  #editor{flex:1; min-height:120px; overflow:hidden}
+  .div-arraste{
+    height:5px; background:var(--borda); cursor:row-resize; flex:none;
+    transition:background .15s;
+  }
+  .div-arraste:hover{background:var(--ciano)}
+  #cod-saida{
+    height:190px; overflow:auto; margin:0; padding:9px 13px; background:#070910;
+    font-family:var(--mono); font-size:11.5px; line-height:1.5; flex:none;
+    white-space:pre-wrap; word-break:break-word; color:#c3ccdb;
+  }
+
+  /* ── Espelho ao vivo ───────────────────────────────────── */
+  .pisca{
+    display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:var(--fraco); margin-left:6px; vertical-align:middle;
+  }
+  .pisca.on{background:var(--verde); box-shadow:0 0 7px var(--verde)}
+  .pisca.novo{animation:flash 1s ease-out}
+  @keyframes flash{0%{background:var(--ciano); box-shadow:0 0 12px var(--ciano)}100%{background:var(--verde)}}
+  .opcao{display:flex; align-items:center; gap:5px; color:var(--dim);
+         font-size:11px; cursor:pointer; user-select:none}
+  .opcao input{accent-color:var(--ciano); cursor:pointer}
+
+  .bloco{border-bottom:1px solid var(--borda)}
+  .bloco-cab{
+    display:flex; align-items:center; gap:9px; padding:7px 13px;
+    background:var(--sup2); cursor:pointer;
+  }
+  .bloco-cab:hover{background:var(--borda)}
+  .marca-fer{
+    font-size:9px; font-weight:700; letter-spacing:.06em; padding:2px 7px;
+    border-radius:5px; flex:none;
+  }
+  .fer-Write{background:rgba(52,211,153,.15); color:var(--verde)}
+  .fer-Edit{background:rgba(56,189,248,.15); color:var(--ciano)}
+  .fer-Bash{background:rgba(167,139,250,.15); color:var(--violeta)}
+  .bloco-arq{font-family:var(--mono); font-size:12px; font-weight:600;
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .bloco-meta{margin-left:auto; color:var(--fraco); font-size:10.5px;
+              font-family:var(--mono); white-space:nowrap; flex:none}
+  .bloco-cod{
+    margin:0; padding:9px 13px; background:#070910; overflow-x:auto;
+    font-family:var(--mono); font-size:11.5px; line-height:1.55;
+    max-height:340px; overflow-y:auto; white-space:pre;
+  }
+  .bloco.fechado .bloco-cod{display:none}
+  .bloco-cod .mtk1{color:#dbe4f0}
+  .bloco-acoes{display:flex; gap:5px; flex:none}
+
+  .carregar-mais{
+    padding:6px 13px; border-top:1px solid var(--borda);
+    background:var(--sup2); flex:none; text-align:center;
+  }
+
+  /* Narração: prosa, não código — largura e entrelinha de leitura. */
+  .fala{
+    padding:13px 18px 15px; border-bottom:1px solid var(--borda);
+    background:linear-gradient(90deg,rgba(56,189,248,.05),transparent 60%);
+    border-left:2px solid var(--ciano);
+  }
+  .pergunta{
+    padding:11px 18px 12px; border-bottom:1px solid var(--borda);
+    background:linear-gradient(90deg,rgba(251,191,36,.06),transparent 60%);
+    border-left:2px solid var(--ambar);
+  }
+  .fala-quem{
+    font-size:9.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
+    margin-bottom:6px; display:flex; align-items:center; gap:8px;
+  }
+  .fala .fala-quem{color:var(--ciano)}
+  .pergunta .fala-quem{color:var(--ambar)}
+  .fala-quem span{margin-left:auto; color:var(--fraco); font-weight:400;
+                  letter-spacing:0; font-family:var(--mono); font-size:10px}
+  .prosa{font-size:13px; line-height:1.72; color:var(--txt); max-width:74ch}
+  .prosa p{margin:0 0 9px}
+  .prosa p:last-child{margin-bottom:0}
+  .prosa h1,.prosa h2,.prosa h3{
+    font-size:12.5px; font-weight:700; margin:13px 0 6px; color:var(--txt);
+    letter-spacing:.02em;
+  }
+  .prosa h1:first-child,.prosa h2:first-child,.prosa h3:first-child{margin-top:0}
+  .prosa ul,.prosa ol{margin:0 0 9px; padding-left:20px}
+  .prosa li{margin-bottom:3px}
+  .prosa code{
+    background:#070910; padding:1.5px 6px; border-radius:4px;
+    font-family:var(--mono); font-size:11.5px; color:var(--ciano);
+  }
+  .prosa pre{
+    background:#070910; padding:9px 12px; border-radius:7px; overflow-x:auto;
+    margin:0 0 9px; border:1px solid var(--borda);
+  }
+  .prosa pre code{background:none; padding:0; color:#c3ccdb; font-size:11.5px}
+  .prosa strong{color:#fff; font-weight:650}
+  .prosa em{color:var(--dim)}
+  .prosa a{color:var(--ciano)}
+  .prosa table{width:auto; margin:0 0 9px; font-family:var(--ui); font-size:12px}
+  .prosa th,.prosa td{padding:4px 11px 4px 0; white-space:normal; max-width:none}
+  .prosa blockquote{
+    margin:0 0 9px; padding-left:11px; border-left:2px solid var(--borda-viva);
+    color:var(--dim);
+  }
+
+  /* ── Webview de IA ─────────────────────────────────────── */
+  #caixa-webview{flex:1; min-height:0; display:flex; background:#fff}
+  #caixa-webview webview{flex:1; border:none}
+  .aviso-web{
+    padding:22px; color:var(--dim); font-size:12.5px; line-height:1.7;
+    background:var(--sup); max-width:640px; margin:auto;
+  }
+  .aviso-web b{color:var(--txt)}
+  .aviso-web code{
+    background:var(--fundo); padding:1px 6px; border-radius:4px;
+    font-family:var(--mono); font-size:11.5px; color:var(--ciano);
+  }
+
+  #caixa-vscode{flex:1; min-height:0; display:flex; background:#1e1e1e}
+  #caixa-vscode webview{flex:1; border:none}
+
+  /* ── Acervo de códigos ─────────────────────────────────── */
+  .acervo{flex:1; display:grid; grid-template-columns:minmax(210px,1fr) 1.5fr; min-height:0}
+  .ac-lista{overflow:auto; border-right:1px solid var(--borda)}
+  .ac-dia{
+    padding:6px 12px 4px; color:var(--fraco); font-size:10px; font-weight:700;
+    letter-spacing:.12em; background:var(--sup2); border-bottom:1px solid var(--borda);
+    position:sticky; top:0; z-index:1;
+  }
+  .ac-item{padding:7px 12px; border-bottom:1px solid rgba(35,41,54,.5); cursor:pointer}
+  .ac-item:hover{background:var(--sup2)}
+  .ac-item.sel{background:rgba(56,189,248,.12); border-left:2px solid var(--ciano)}
+  .ac-item b{display:block; font-family:var(--mono); font-size:11.5px; font-weight:600;
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .ac-item span{display:block; color:var(--fraco); font-size:10px; font-family:var(--mono)}
+  .ac-preview{
+    margin:0; padding:11px 14px; overflow:auto; background:#070910; min-height:0;
+    font-family:var(--mono); font-size:11.5px; line-height:1.55; white-space:pre;
+  }
+
+  /* ── Extensões ─────────────────────────────────────────── */
+  .ext-grupo{
+    padding:7px 13px 4px; color:var(--fraco); font-size:10px; font-weight:700;
+    letter-spacing:.12em; text-transform:uppercase; background:var(--sup2);
+    border-bottom:1px solid var(--borda); position:sticky; top:0; z-index:1;
+  }
+  .ext-item{display:flex; align-items:center; gap:11px; padding:9px 13px;
+            border-bottom:1px solid rgba(35,41,54,.5)}
+  .ext-item:hover{background:var(--sup2)}
+  .ext-luz{width:7px;height:7px;border-radius:50%;background:var(--fraco);flex:none}
+  .ext-luz.on{background:var(--verde); box-shadow:0 0 7px var(--verde)}
+  .ext-txt{min-width:0; flex:1}
+  .ext-txt b{font-size:12.5px; display:block}
+  .ext-txt span{color:var(--fraco); font-size:11px; display:block;
+                overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .ext-txt code{font-family:var(--mono); font-size:10.5px; color:var(--fraco)}
+
+  /* ── Scripts ───────────────────────────────────────────── */
+  .scripts{display:flex; flex-direction:column; min-height:0; flex:1}
+  .lista-s{border-bottom:1px solid var(--borda); flex:none; max-height:186px; overflow:auto}
+  .s-item{display:flex; align-items:center; gap:10px; padding:9px 13px;
+          border-bottom:1px solid rgba(35,41,54,.5)}
+  .s-item:last-child{border-bottom:none}
+  .s-luz{width:7px;height:7px;border-radius:50%;background:var(--fraco);flex:none}
+  .s-luz.on{background:var(--verde); box-shadow:0 0 7px var(--verde)}
+  .s-txt{min-width:0; flex:1}
+  .s-txt b{font-size:12.5px; font-weight:600; display:block}
+  .s-txt span{color:var(--fraco); font-size:11px; display:block;
+              overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  #s-saida{
+    flex:1; overflow:auto; margin:0; padding:10px 13px; background:#070910;
+    font-family:var(--mono); font-size:11.5px; line-height:1.5;
+    white-space:pre-wrap; word-break:break-word; color:#c3ccdb; min-height:0;
+  }
+  .rodape{display:flex; align-items:center; gap:9px; padding:7px 13px;
+          border-top:1px solid var(--borda); background:var(--sup2); flex:none}
+  .rodape .info{color:var(--fraco); font-size:11px; font-family:var(--mono);
+                margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  kbd{background:var(--fundo); border:1px solid var(--borda); border-radius:4px;
+      padding:1px 5px; font-size:10px; font-family:var(--mono); color:var(--dim)}
+
+  /* ── Livraria ──────────────────────────────────────────── */
+  /* Duas colunas: as prateleiras à esquerda, a página aberta à direita. */
+  .livraria{flex:1; display:grid; grid-template-columns:minmax(215px,1fr) 2.2fr; min-height:0}
+  .lv-lista{overflow:auto; min-width:0; border-right:1px solid var(--borda)}
+  .lv-estante{
+    padding:6px 12px 4px; color:var(--fraco); font-size:10px; font-weight:700;
+    letter-spacing:.12em; text-transform:uppercase; background:var(--sup2);
+    border-bottom:1px solid var(--borda); position:sticky; top:0; z-index:1;
+  }
+  .lv-item{padding:8px 12px; border-bottom:1px solid rgba(35,41,54,.5);
+           cursor:pointer; border-left:2px solid transparent}
+  .lv-item:hover{background:var(--sup2)}
+  .lv-item.sel{background:rgba(56,189,248,.12); border-left-color:var(--ciano)}
+  .lv-item b{display:block; font-size:12.5px; font-weight:600;
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .lv-item .quando{display:block; color:var(--fraco); font-size:10px;
+                   font-family:var(--mono); margin-top:2px}
+  .lv-tags{margin-top:4px; display:flex; flex-wrap:wrap; gap:3px}
+  .lv-tag{background:var(--fundo); color:var(--dim); border:1px solid var(--borda);
+          border-radius:20px; padding:0 7px; font-size:9.5px; font-family:var(--mono)}
+
+  .lv-dir{display:flex; flex-direction:column; min-height:0; min-width:0}
+  .lv-cab{
+    display:flex; align-items:center; gap:8px; padding:8px 14px; flex:none;
+    border-bottom:1px solid var(--borda); background:var(--sup2);
+  }
+  .lv-tit-caixa{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px}
+  .lv-cab .tit{font-size:13.5px; font-weight:700; overflow:hidden;
+               text-overflow:ellipsis; white-space:nowrap}
+  .lv-cab .sub{color:var(--fraco); font-size:10.5px; font-family:var(--mono);
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .lv-cab button{flex:none; white-space:nowrap}
+  .lv-bloco-cab button{flex:none; white-space:nowrap}
+  /* Leitura: seleção livre e cursor de texto — dá para marcar e copiar. */
+  .lv-corpo{
+    flex:1; overflow:auto; padding:16px 20px 26px; min-height:0; min-width:0;
+    user-select:text; -webkit-user-select:text; cursor:auto;
+  }
+  .lv-corpo .prosa{max-width:84ch}
+
+  /* Cada bloco de código do verbete ganha barra própria. */
+  .lv-bloco{
+    border:1px solid var(--borda); border-radius:8px; overflow:hidden;
+    margin:0 0 11px; background:#070910; max-width:100%;
+  }
+  .lv-bloco-cab{display:flex; align-items:center; gap:6px; padding:5px 8px; min-width:0;
+                background:var(--sup2); border-bottom:1px solid var(--borda)}
+  .lv-bloco-cab .lg{font-family:var(--mono); font-size:10px; color:var(--fraco);
+                    letter-spacing:.08em; text-transform:uppercase;
+                    overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .lv-bloco-cab .gap{flex:1}
+  .lv-bloco pre{
+    margin:0; padding:10px 13px; overflow:auto; max-height:420px;
+    font-family:var(--mono); font-size:11.5px; line-height:1.55;
+    white-space:pre; color:#c3ccdb;
+  }
+
+  .lv-form{flex:1; display:flex; flex-direction:column; min-height:0}
+  .lv-campos{display:flex; gap:6px; padding:8px 11px; flex:none;
+             border-bottom:1px solid var(--borda); background:var(--sup2)}
+  #lv-editor{flex:1; min-height:140px}
+  .lv-rodape-form{display:flex; align-items:center; gap:7px; padding:7px 11px;
+                  border-top:1px solid var(--borda); background:var(--sup2); flex:none}
+  #lv-saida{
+    height:160px; overflow:auto; margin:0; padding:9px 13px; background:#070910;
+    border-top:1px solid var(--borda); font-family:var(--mono); font-size:11.5px;
+    line-height:1.5; flex:none; white-space:pre-wrap; word-break:break-word;
+    color:#c3ccdb;
+  }
+
+  /* Menu do botão direito: copiar, rodar, guardar — sem sair da página. */
+  .menu-mouse{
+    position:fixed; z-index:200; min-width:198px; padding:4px;
+    background:var(--sup2); border:1px solid var(--borda-viva);
+    border-radius:9px; box-shadow:0 14px 34px rgba(0,0,0,.55);
+  }
+  .menu-mouse button{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    padding:6px 10px; border-radius:6px; font-size:12px; color:var(--dim);
+  }
+  .menu-mouse button:hover{background:var(--borda); color:var(--txt)}
+  .menu-mouse hr{border:none; border-top:1px solid var(--borda); margin:4px 3px}
+
+  /* Botão "livraria" dentro do cabeçalho da narração ao vivo. */
+  .fala-quem button{text-transform:none; letter-spacing:0; font-weight:500; flex:none}
+
+  /* Selo de novidade na aba: o professor escreve, isto acende. Sem ele
+     as aulas ficavam esperando em silêncio e o João nem sabia. */
+  .selo{
+    display:none; margin-left:6px; padding:0 6px; border-radius:20px;
+    background:var(--verde); color:#07120d; font-size:9.5px; font-weight:800;
+    font-family:var(--mono); vertical-align:middle; line-height:15px;
+  }
+  .selo.ver{display:inline-block; animation:pulsa 2s ease-out}
+  @keyframes pulsa{0%{transform:scale(1.5); box-shadow:0 0 12px var(--verde)}100%{transform:scale(1)}}
+
+  /* ── Assistente pago ───────────────────────────────────── */
+  .as-topo{display:grid; grid-template-columns:repeat(4,1fr); gap:9px;
+           padding:11px 13px; flex:none; border-bottom:1px solid var(--borda)}
+  .as-cart{background:var(--sup2); border:1px solid var(--borda);
+           border-radius:9px; padding:9px 11px}
+  .as-cart .r{color:var(--fraco); font-size:9.5px; letter-spacing:.12em;
+              text-transform:uppercase; font-weight:600}
+  .as-cart .v{font-family:var(--mono); font-size:19px; font-weight:700; margin-top:3px}
+  .as-cart .s{color:var(--dim); font-size:10.5px; margin-top:2px}
+  .as-barra{height:5px; background:var(--fundo); border-radius:4px;
+            margin-top:6px; overflow:hidden}
+  .as-barra i{display:block; height:100%; background:var(--verde); transition:.3s}
+  .as-barra i.meio{background:var(--ambar)}
+  .as-barra i.cheio{background:var(--rosa)}
+  .as-corpo{flex:1; overflow:auto; min-height:0; padding:12px 13px}
+  .as-caixa{display:flex; gap:7px; align-items:flex-start; margin-bottom:13px}
+  #as-texto{
+    flex:1; min-height:64px; resize:vertical; background:var(--fundo);
+    color:var(--txt); border:1px solid var(--borda); border-radius:8px;
+    padding:9px 11px; font-family:var(--ui); font-size:12.5px; line-height:1.55;
+  }
+  #as-texto:focus{outline:none; border-color:var(--ciano)}
+  .as-item{display:flex; align-items:flex-start; gap:9px; padding:9px 11px;
+           border:1px solid var(--borda); border-radius:8px; margin-bottom:7px;
+           background:var(--sup2)}
+  .as-luz{width:8px; height:8px; border-radius:50%; flex:none; margin-top:4px}
+  .as-luz.esperando{background:var(--ambar)}
+  .as-luz.trabalhando{background:var(--ciano); animation:bate 1.4s infinite}
+  .as-luz.pronto{background:var(--verde)}
+  .as-item .t{flex:1; min-width:0; font-size:12.5px; line-height:1.5}
+  .as-item .q{color:var(--fraco); font-size:10.5px; font-family:var(--mono); margin-top:3px}
+  .as-sem-chave{padding:14px; border:1px solid var(--ambar); border-radius:9px;
+                background:rgba(251,191,36,.08); color:var(--ambar); font-size:12.5px}
+
+  .aviso{position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+         background:var(--sup2); border:1px solid var(--borda-viva); color:var(--txt);
+         padding:9px 16px; border-radius:9px; font-size:12px; z-index:50;
+         box-shadow:0 10px 30px rgba(0,0,0,.5); opacity:0; transition:.2s; pointer-events:none}
+  .aviso.ver{opacity:1}
+
+  @media (max-width:1150px){
+    .metricas{grid-template-columns:repeat(3,1fr)}
+    main{grid-template-columns:1fr; overflow:auto}
+    body{overflow:auto}
+    .painel{min-height:250px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="marca"><b>NEON</b><i>vigilância local</i></div>
+  <div class="viva"><div class="ponto" id="ponto"></div><span id="estado">conectando</span></div>
+  <div class="gap"></div>
+  <div class="lancadores" id="lancadores"></div>
+  <button class="mini" id="b-pasta-topo" title="Abrir ~/neon-codigos">📁 códigos</button>
+  <div class="chip" id="chip-rede">rede <b>—</b></div>
+  <button id="b-susp" class="d">Suspender rede</button>
+  <button id="b-reat">Reativar</button>
+</header>
+
+<section class="metricas">
+  <div class="card"><div class="rot">Conexões</div><div class="val ciano" id="m1">—</div><div class="sub" id="m1s">—</div><svg id="g1" viewBox="0 0 74 30" preserveAspectRatio="none"></svg></div>
+  <div class="card"><div class="rot">Ameaças</div><div class="val verde" id="m2">—</div><div class="sub" id="m2s">nenhuma</div><svg id="g2" viewBox="0 0 74 30" preserveAspectRatio="none"></svg></div>
+  <div class="card"><div class="rot">Processos de IA</div><div class="val violeta" id="m3">—</div><div class="sub" id="m3s">—</div></div>
+  <div class="card"><div class="rot">Memória IA</div><div class="val ambar" id="m4">—</div><div class="sub">MB residentes</div><svg id="g4" viewBox="0 0 74 30" preserveAspectRatio="none"></svg></div>
+  <div class="card"><div class="rot">Escutando</div><div class="val ciano" id="m5">—</div><div class="sub">portas abertas</div></div>
+</section>
+
+<main>
+  <div class="col">
+    <div class="painel" style="flex:none; max-height:210px">
+      <div class="cab"><h2>Ameaças</h2><span class="n" id="n-am">0</span></div>
+      <div class="corpo" id="l-ameacas"><div class="vazio">Nenhuma atividade suspeita.</div></div>
+    </div>
+    <div class="painel" style="flex:none; max-height:230px">
+      <div class="cab"><h2>Processos de IA</h2><span class="n" id="n-ia">0</span></div>
+      <div class="corpo" id="l-ia"><div class="vazio">Aguardando primeira leitura…</div></div>
+    </div>
+    <div class="painel">
+      <div class="cab"><h2>Conexões</h2><div class="gap"></div>
+        <input class="busca" id="filtro" placeholder="filtrar processo, ip, porta…"></div>
+      <div class="corpo">
+        <table><thead><tr><th>Processo</th><th>PID</th><th>Local</th><th>Remoto</th><th>Estado</th></tr></thead>
+        <tbody id="t-conn"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="painel">
+      <div class="cab">
+        <div class="abas">
+          <div class="aba sel" data-p="p-term">Terminal</div>
+          <div class="aba" data-p="p-vivo">Ao vivo<span class="pisca" id="vivo-luz"></span></div>
+          <div class="aba" data-p="p-bot">Bot</div>
+          <div class="aba" data-p="p-editor">Editor</div>
+          <div class="aba" data-p="p-vscode">VS Code</div>
+          <div class="aba" data-p="p-gemini">Gemini</div>
+          <div class="aba" data-p="p-scripts">Scripts</div>
+          <div class="aba" data-p="p-assistente">Assistente</div>
+          <div class="aba" data-p="p-livraria">Livraria<span class="selo" id="selo-lv">0</span></div>
+          <div class="aba" data-p="p-arquivo">Arquivo</div>
+          <div class="aba" data-p="p-ext">Extensões</div>
+        </div>
+        <div class="gap"></div>
+        <button class="mini d" id="b-encerrar" hidden>■ encerrar</button>
+        <button class="mini" id="b-limpar">limpar</button>
+        <button class="mini" id="b-novo">novo shell</button>
+      </div>
+
+      <div class="pag sel" id="p-term">
+        <div id="term"></div>
+        <div class="rodape">
+          <span style="color:var(--fraco);font-size:11px">
+            PTY real — selecionar já copia · <kbd>Ctrl+Shift+V</kbd> ou botão direito cola · <kbd>Ctrl+C</kbd> interrompe
+          </span>
+          <span class="info" id="term-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-vivo">
+        <div class="barra-ed">
+          <input id="vivo-filtro" class="busca" style="width:200px" placeholder="filtrar arquivo ou código…">
+          <label class="opcao"><input type="checkbox" id="vivo-rolar" checked> seguir</label>
+          <label class="opcao"><input type="checkbox" id="vivo-fala" checked> explicações</label>
+          <label class="opcao"><input type="checkbox" id="vivo-pergunta" checked> pedidos</label>
+          <label class="opcao"><input type="checkbox" id="vivo-bash"> comandos</label>
+          <div class="gap"></div>
+          <button class="mini" id="vivo-limpar">limpar</button>
+        </div>
+        <div class="corpo" id="vivo-feed">
+          <div class="vazio">Aguardando o Claude Code escrever algo…<br>
+            <span style="font-size:11px">Cada arquivo criado ou editado aparece aqui, com destaque de sintaxe.</span>
+          </div>
+        </div>
+        <div class="carregar-mais" id="vivo-mais" hidden>
+          <button class="mini" id="b-mais">▲ carregar mais antigos</button>
+        </div>
+        <div class="rodape">
+          <span id="vivo-status" style="color:var(--fraco);font-size:11px">conectando…</span>
+          <span class="info" id="vivo-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-bot">
+        <div class="corpo" id="bot-conversa">
+          <div class="vazio">Pergunte alguma coisa de programação.<br>
+            <span style="font-size:11px">Ele responde de três lugares: as fichas que
+            aprendeu, as receitas de código, e os textos que leu.</span>
+          </div>
+        </div>
+        <div class="barra-ed" id="bot-barra-codigo" hidden>
+          <select id="bot-ling" class="sel-lang" style="min-width:130px">
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="c">C</option>
+            <option value="cpp">C++</option>
+            <option value="bash">Bash</option>
+          </select>
+          <span style="color:var(--fraco);font-size:11px">
+            cole o código abaixo e mande corrigir</span>
+          <div class="gap"></div>
+          <button class="mini p" id="bot-corrigir">corrigir</button>
+          <button class="mini" id="bot-fechar-codigo">fechar</button>
+        </div>
+        <textarea id="bot-codigo" hidden spellcheck="false"
+          placeholder="cole aqui o código que não está funcionando…"
+          style="height:150px;resize:vertical;background:var(--sup2);color:var(--txt);
+                 border:1px solid var(--borda);border-top:none;padding:9px 12px;
+                 font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;
+                 outline:none"></textarea>
+        <div class="barra-ed">
+          <input id="bot-campo" class="busca" style="flex:1"
+                 placeholder="pergunte, ou:  abrir ~/Documentos" autocomplete="off">
+          <button class="mini p" id="bot-enviar">perguntar</button>
+          <button class="mini" id="bot-codigo-btn">colar código</button>
+          <button class="mini" id="bot-descobrir" title="Ele relê o que já viu e traz o que ainda não sabe">descobrir</button>
+          <button class="mini" id="bot-limpar">limpar</button>
+        </div>
+        <div class="rodape">
+          <span style="color:var(--fraco);font-size:11px">
+            O cérebro é o mesmo do terminal — o que você ensina lá aparece aqui
+          </span>
+          <span class="info" id="bot-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-editor">
+        <div class="barra-ed">
+          <select id="lang" class="sel-lang"></select>
+          <button class="mini p" id="b-rodar">▶ Rodar</button>
+          <button class="mini d" id="b-parar" disabled>■ Parar</button>
+          <div class="gap"></div>
+          <button class="mini" id="b-copiar">copiar</button>
+          <button class="mini" id="b-salvar-cod">salvar</button>
+          <button class="mini" id="b-limpar-cod">limpar saída</button>
+        </div>
+        <div id="editor"></div>
+        <div class="div-arraste" id="arraste"></div>
+        <pre id="cod-saida">A saída da execução aparece aqui.</pre>
+        <div class="rodape">
+          <span id="ed-aviso" style="color:var(--fraco);font-size:11px">—</span>
+          <span class="info" id="ed-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-vscode">
+        <div class="barra-ed">
+          <span id="vs-status" style="color:var(--fraco);font-size:11px">desligado</span>
+          <div class="gap"></div>
+          <button class="mini p" id="vs-ligar">ligar</button>
+          <button class="mini" id="vs-recarregar">recarregar</button>
+          <button class="mini d" id="vs-desligar">desligar</button>
+        </div>
+        <div id="caixa-vscode">
+          <div class="aviso-web">
+            <b>VS Code dentro do painel.</b><br><br>
+            É o VS Code de verdade (code-server): árvore de arquivos, terminal,
+            extensões — com Claude Code e Gemini Code Assist já instalados nele.<br><br>
+            Ele sobe só quando você pede, porque consome uns 300 MB.
+            Clique em <code>ligar</code>.
+          </div>
+        </div>
+        <div class="rodape">
+          <span style="color:var(--fraco);font-size:11px">
+            É uma instalação própria do painel — separada do seu VS Code de fora
+          </span>
+          <span class="info" id="vs-url">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-gemini">
+        <div class="barra-ed">
+          <select id="site-ia" class="sel-lang" style="min-width:170px">
+            <option value="https://gemini.google.com/app">Gemini</option>
+            <option value="https://aistudio.google.com/">Google AI Studio</option>
+            <option value="https://claude.ai/new">Claude</option>
+            <option value="https://chatgpt.com/">ChatGPT</option>
+          </select>
+          <button class="mini" id="g-voltar">←</button>
+          <button class="mini" id="g-recarregar">recarregar</button>
+          <div class="gap"></div>
+          <button class="mini" id="g-externo">abrir no navegador</button>
+        </div>
+        <div id="caixa-webview"></div>
+        <div class="rodape">
+          <span id="g-status" style="color:var(--fraco);font-size:11px">carregando…</span>
+          <span class="info" id="g-url">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-assistente">
+        <div class="as-topo">
+          <div class="as-cart">
+            <div class="r">Gasto</div><div class="v ciano" id="as-gasto">—</div>
+            <div class="as-barra"><i id="as-barra" style="width:0"></i></div>
+            <div class="s" id="as-teto">teto —</div>
+          </div>
+          <div class="as-cart">
+            <div class="r">Ainda cabem</div><div class="v verde" id="as-cabem">—</div>
+            <div class="s">tarefas, pela média</div>
+          </div>
+          <div class="as-cart">
+            <div class="r">Custo médio</div><div class="v ambar" id="as-media">—</div>
+            <div class="s" id="as-chamadas">— chamadas</div>
+          </div>
+          <div class="as-cart">
+            <div class="r">Na fila</div><div class="v violeta" id="as-fila">—</div>
+            <div class="s" id="as-estado-bot">assistente parado</div>
+          </div>
+        </div>
+
+        <div class="barra-ed">
+          <button class="mini p" id="as-ligar">▶ ligar assistente</button>
+          <button class="mini d" id="as-parar">■ parar</button>
+          <span style="color:var(--fraco);font-size:11px">teto de gasto</span>
+          <input id="as-teto-campo" class="busca" style="width:78px" placeholder="1.00">
+          <button class="mini" id="as-salvar-teto">gravar</button>
+          <div class="gap"></div>
+          <button class="mini" id="as-atualizar">atualizar</button>
+        </div>
+
+        <div class="as-corpo">
+          <div id="as-aviso-chave" hidden class="as-sem-chave">
+            Sem chave da API. O assistente não vai conseguir trabalhar.
+          </div>
+
+          <div class="as-caixa">
+            <textarea id="as-texto" spellcheck="false"
+              placeholder="Joga um desafio aqui. Enquanto o PC estiver ligado, ele trabalha nisso.&#10;Ex.: 'Acha o buraco de segurança no meu neon_interceptor.py e mostra como fechar'"></textarea>
+            <button class="mini p" id="as-mandar" style="padding:9px 14px">mandar</button>
+          </div>
+
+          <div id="as-lista"><div class="vazio">Nenhum desafio ainda.</div></div>
+        </div>
+
+        <div class="rodape">
+          <span style="color:var(--fraco);font-size:11px">
+            Cada resposta vira página na Livraria e nunca é paga duas vezes
+          </span>
+          <span class="info" id="as-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-livraria">
+        <div class="barra-ed">
+          <input id="lv-busca" class="busca" style="width:215px"
+                 placeholder="buscar título, estante, etiqueta…">
+          <label class="opcao"><input type="checkbox" id="lv-dentro"> dentro do texto</label>
+          <select id="lv-estante-f" class="sel-lang" style="min-width:140px">
+            <option value="">todas as estantes</option>
+          </select>
+          <div class="gap"></div>
+          <button class="mini p" id="lv-nova">+ nova página</button>
+          <button class="mini" id="lv-colar">colar conversa</button>
+          <button class="mini" id="lv-pasta">abrir pasta</button>
+        </div>
+
+        <div class="livraria">
+          <div class="lv-lista" id="lv-lista"><div class="vazio">Abrindo a livraria…</div></div>
+
+          <div class="lv-dir">
+            <div class="lv-cab" id="lv-cab" hidden>
+              <div class="lv-tit-caixa">
+                <span class="tit" id="lv-titulo"></span>
+                <span class="sub" id="lv-sub"></span>
+              </div>
+              <button class="mini p" id="lv-editar">editar</button>
+              <button class="mini" id="lv-copiar-tudo">copiar tudo</button>
+              <button class="mini d" id="lv-excluir">excluir</button>
+            </div>
+
+            <div class="lv-corpo" id="lv-corpo">
+              <div class="vazio">
+                A sua livraria.<br><br>
+                <span style="font-size:11.5px">
+                  Cada página guarda uma conversa inteira: a explicação junto do
+                  código, na estante que você escolher.<br>
+                  Botão direito em qualquer lugar abre o menu de copiar, rodar e guardar.
+                </span>
+              </div>
+            </div>
+
+            <div class="lv-form" id="lv-form" hidden>
+              <div class="lv-campos">
+                <input id="lv-f-titulo" class="busca" style="flex:1"
+                       placeholder="título — do que trata esta página">
+                <input id="lv-f-estante" class="busca" style="width:160px"
+                       list="lv-estantes" placeholder="estante">
+                <datalist id="lv-estantes"></datalist>
+                <input id="lv-f-tags" class="busca" style="width:180px"
+                       placeholder="etiquetas, por vírgula">
+              </div>
+              <div id="lv-editor"></div>
+              <div class="lv-rodape-form">
+                <button class="mini p" id="lv-salvar">salvar</button>
+                <button class="mini" id="lv-cancelar">cancelar</button>
+                <span style="color:var(--fraco);font-size:11px">
+                  Texto e código no mesmo lugar — código entre <code>```</code>.
+                  <kbd>Ctrl+S</kbd> salva
+                </span>
+              </div>
+            </div>
+
+            <pre id="lv-saida" hidden>A saída do código roda aqui.</pre>
+          </div>
+        </div>
+
+        <div class="rodape">
+          <button class="mini d" id="lv-parar" hidden>■ parar</button>
+          <button class="mini" id="lv-fechar-saida" hidden>fechar saída</button>
+          <span id="lv-status" style="color:var(--fraco);font-size:11px">
+            Botão direito: copiar, rodar, guardar
+          </span>
+          <span class="info" id="lv-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-arquivo">
+        <div class="barra-ed">
+          <input id="ac-busca" class="busca" style="width:230px" placeholder="buscar por nome, linguagem ou data…">
+          <label class="opcao"><input type="checkbox" id="ac-conteudo"> dentro do código</label>
+          <div class="gap"></div>
+          <button class="mini p" id="ac-pasta">abrir pasta</button>
+          <button class="mini" id="ac-atualizar">atualizar</button>
+        </div>
+        <div class="acervo">
+          <div class="ac-lista" id="ac-lista"><div class="vazio">Carregando acervo…</div></div>
+          <pre class="ac-preview" id="ac-preview">Selecione um arquivo à esquerda.</pre>
+        </div>
+        <div class="rodape">
+          <button class="mini" id="ac-copiar">copiar</button>
+          <button class="mini" id="ac-editor">no editor</button>
+          <span class="info" id="ac-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-ext">
+        <div class="barra-ed">
+          <input id="ext-id" class="busca" style="width:260px"
+                 placeholder="publicador.nome  (ex.: google.geminicodeassist)">
+          <button class="mini p" id="ext-instalar">instalar</button>
+          <div class="gap"></div>
+          <button class="mini" id="ext-recarregar">atualizar lista</button>
+        </div>
+        <div class="corpo" id="lista-ext"><div class="vazio">Carregando extensões…</div></div>
+        <div class="rodape">
+          <span style="color:var(--fraco);font-size:11px">Extensões do VS Code — é onde Claude Code e Gemini rodam como extensão</span>
+          <span class="info" id="ext-info">—</span>
+        </div>
+      </div>
+
+      <div class="pag" id="p-scripts">
+        <div class="scripts">
+          <div class="lista-s" id="lista-s"></div>
+          <pre id="s-saida">Selecione um script acima para ver a saída.</pre>
+          <div class="rodape">
+            <button class="mini" id="b-salvar">salvar saída</button>
+            <button class="mini" id="b-limpar-s">limpar</button>
+            <span class="info" id="s-info">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="sem-conexao" hidden>
+  ⚠ SEM CONEXÃO COM O PAINEL — o servidor caiu ou está reiniciando.
+  Tentando reconectar sozinho…
+</div>
+<div class="menu-mouse" id="menu-mouse" hidden></div>
+<div class="aviso" id="aviso"></div>
+
+<script src="/vendor/xterm.js"></script>
+<script src="/vendor/addon-fit.js"></script>
+<script src="/vendor/monaco/vs/loader.js"></script>
+<script>
+const TOKEN = '__NEON_TOKEN__';
+const H = { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// ── Estado da conexão com o painel ───────────────────────────
+//
+// O servidor pode cair (reinício, atualização, crash) enquanto a página
+// segue aberta. Antes, cada botão respondia "Failed to fetch" e a tela
+// ficava parada, mentindo que estava tudo bem. Agora a queda é visível,
+// a reconexão é automática, e quando o servidor volta a página se
+// recarrega sozinha para religar os fluxos ao vivo.
+
+let apiNoAr = true;
+let caiuEm = 0;
+
+function marcarQueda() {
+  if (!apiNoAr) return;
+  apiNoAr = false;
+  caiuEm = Date.now();
+  const b = $('sem-conexao');
+  if (b) b.hidden = false;
+  document.body.classList.add('offline');
+}
+
+function marcarVolta() {
+  if (apiNoAr) return;
+  apiNoAr = true;
+  const b = $('sem-conexao');
+  if (b) b.hidden = true;
+  document.body.classList.remove('offline');
+  // Ficou fora mais de 2 s: os fluxos ao vivo (terminal, telemetria)
+  // morreram junto. Recarregar é mais honesto que fingir que voltou.
+  if (Date.now() - caiuEm > 2000) location.reload();
+}
+
+const post = async (r, b) => {
+  try {
+    const res = await fetch('/api' + r, {
+      method: 'POST', headers: H, body: JSON.stringify(b || {}),
+    });
+    marcarVolta();
+    return await res.json();
+  } catch (e) {
+    marcarQueda();
+    return { ok: false, error: 'sem conexão com o painel' };
+  }
+};
+
+// Batimento: quatro em quatro segundos, pergunta se o painel responde.
+setInterval(async () => {
+  try {
+    const r = await fetch('/api/health', { cache: 'no-store' });
+    if (r.ok) marcarVolta(); else marcarQueda();
+  } catch {
+    marcarQueda();
+  }
+}, 4000);
+
+let tempoAviso;
+function aviso(msg) {
+  const el = $('aviso'); el.textContent = msg; el.classList.add('ver');
+  clearTimeout(tempoAviso); tempoAviso = setTimeout(() => el.classList.remove('ver'), 3800);
+}
+
+// Erros de JS ficam visíveis em vez de morrer no console.
+addEventListener('error', e => aviso('Erro na interface: ' + e.message));
+addEventListener('unhandledrejection', e => aviso('Falha: ' + e.reason));
+
+/** Assina um fluxo SSE mantendo o cabeçalho de autorização. */
+async function assinar(url, aoEvento, aoStatus) {
+  for (;;) {
+    try {
+      const res = await fetch(url, { headers: H });
+      if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+      aoStatus?.(true);
+      const leitor = res.body.getReader(), dec = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { done, value } = await leitor.read();
+        if (done) break;
+        buf += dec.decode(value, { stream:true });
+        let i;
+        while ((i = buf.indexOf('\n\n')) !== -1) {
+          const bloco = buf.slice(0, i); buf = buf.slice(i + 2);
+          let ev = 'message', dados = '';
+          for (const l of bloco.split('\n')) {
+            if (l.startsWith('event:')) ev = l.slice(6).trim();
+            else if (l.startsWith('data:')) dados += l.slice(5).trim();
+          }
+          if (dados) { try { aoEvento(ev, JSON.parse(dados)); } catch {} }
+        }
+      }
+    } catch (e) { aoStatus?.(false, e.message); }
+    await new Promise(r => setTimeout(r, 1500));
+  }
+}
+
+// ── Minigráficos ─────────────────────────────────────────────
+const hist = { conn:[], am:[], mem:[] };
+function sparkline(svgId, serie, cor) {
+  const svg = $(svgId); if (!svg) return;
+  if (serie.length < 2) { svg.innerHTML = ''; return; }
+  const max = Math.max(...serie, 1), min = Math.min(...serie);
+  const faixa = max - min || 1;
+  const pts = serie.map((v,i) =>
+    `${(i/(serie.length-1))*74},${28 - ((v-min)/faixa)*22}`).join(' ');
+  svg.innerHTML =
+    `<polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="1.6"
+      stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>`;
+}
+function empurrar(arr, v) { arr.push(v); if (arr.length > 40) arr.shift(); }
+
+// ── Telemetria ───────────────────────────────────────────────
+let conexoes = [];
+
+function renderAmeacas(l) {
+  $('n-am').textContent = l.length;
+  $('l-ameacas').innerHTML = l.length ? l.map(a => `
+    <div class="item"><div class="l1">
+      <span class="sev ${a.severidade === 'ALTA' ? 'alta' : 'media'}">${a.severidade}</span>
+      <span class="nome">${esc(a.processo)}</span>
+      <span class="meta">PID ${a.pid ?? '—'}</span></div>
+      <div class="l2">${a.motivos.map(esc).join(' · ')}</div></div>`).join('')
+    : '<div class="vazio">Nenhuma atividade suspeita.</div>';
+}
+
+function renderIA(ia) {
+  $('n-ia').textContent = ia.processos.length;
+  $('l-ia').innerHTML = ia.processos.length ? ia.processos.map(p => `
+    <div class="item"><div class="l1">
+      <span class="nome violeta">${esc(p.nome)}</span>
+      <span class="meta">${p.memoria_mb} MB · ${p.cpu_percent}% · ${esc(p.uptime)}</span></div>
+      <div class="l2">PID ${p.pid} · portas ${p.portas.length ? p.portas.join(' ') : '—'}</div></div>`).join('')
+    : '<div class="vazio">Nenhum processo de IA em execução.</div>';
+}
+
+function renderConexoes() {
+  const f = $('filtro').value.trim().toLowerCase();
+  const l = conexoes.filter(c => !f || `${c.processo} ${c.ip_local} ${c.ip_remoto} ${c.porta_local} ${c.porta_remota} ${c.status}`.toLowerCase().includes(f));
+  $('t-conn').innerHTML = l.slice(0, 300).map(c => `
+    <tr><td>${esc(c.processo)}</td><td class="ciano">${c.pid ?? '—'}</td>
+    <td>${esc(c.ip_local)}:${c.porta_local}</td>
+    <td>${c.ip_remoto ? esc(c.ip_remoto)+':'+c.porta_remota : '—'}</td>
+    <td class="${c.status==='ESTABLISHED'?'verde':c.status==='LISTEN'?'ambar':''}">${esc(c.status)}</td></tr>`).join('')
+    || '<tr><td colspan="5" class="vazio">Nada corresponde ao filtro.</td></tr>';
+}
+$('filtro').addEventListener('input', renderConexoes);
+
+function aplicar(d) {
+  const r = d.rede, ia = d.ia;
+  conexoes = r.conexoes;
+
+  $('m1').textContent = r.total_conexoes;
+  $('m1s').textContent = `TCP ${r.resumo.tcp} · UDP ${r.resumo.udp}`;
+  $('m5').textContent = r.resumo.listen;
+
+  const na = r.ameacas.length;
+  $('m2').textContent = na;
+  $('m2').className = 'val ' + (na === 0 ? 'verde' : na < 3 ? 'ambar' : 'rosa');
+  $('m2s').textContent = na ? `${r.ameacas.filter(a=>a.severidade==='ALTA').length} de severidade alta` : 'nenhuma';
+
+  $('m3').textContent = ia.total_processos_ia;
+  $('m3s').textContent = ia.processos.map(p => p.nome.split(' ')[0]).join(', ') || '—';
+  $('m4').textContent = ia.memoria_total_ia_mb;
+
+  empurrar(hist.conn, r.total_conexoes); sparkline('g1', hist.conn, '#38bdf8');
+  empurrar(hist.am, na);                 sparkline('g2', hist.am, na ? '#fb7185' : '#34d399');
+  empurrar(hist.mem, ia.memoria_total_ia_mb); sparkline('g4', hist.mem, '#fbbf24');
+
+  const ativa = r.status_rede.wifi_ativa;
+  $('chip-rede').innerHTML = `rede <b class="${ativa?'verde':'rosa'}">${ativa?'conectada':'desconectada'}</b>`;
+
+  renderAmeacas(r.ameacas); renderIA(ia); renderConexoes();
+}
+
+assinar('/api/stream/telemetry?intervalo=2500',
+  (ev, d) => { if (ev === 'snapshot') aplicar(d); if (ev === 'erro') aviso(d.error); },
+  (ok, msg) => {
+    $('ponto').className = 'ponto ' + (ok ? 'on' : 'err');
+    $('estado').textContent = ok ? 'ao vivo · 2,5s' : 'reconectando';
+  });
+
+// ── Controle de rede ─────────────────────────────────────────
+$('b-susp').onclick = async () => {
+  if (!confirm('Desconectar a interface de rede agora?\n\nToda comunicação será cortada.')) return;
+  $('b-susp').disabled = true;
+  const r = await post('/security/network/suspend');
+  aviso(r.ok ? 'Rede suspensa.' : 'Falha: ' + r.error);
+  $('b-susp').disabled = false;
+};
+$('b-reat').onclick = async () => {
+  $('b-reat').disabled = true;
+  const r = await post('/security/network/resume');
+  aviso(r.ok ? 'Rede reativada.' : 'Falha: ' + r.error);
+  $('b-reat').disabled = false;
+};
+
+// ── Abas ─────────────────────────────────────────────────────
+document.querySelectorAll('.aba').forEach(a => a.onclick = () => {
+  document.querySelectorAll('.aba').forEach(x => x.classList.remove('sel'));
+  document.querySelectorAll('.pag').forEach(x => x.classList.remove('sel'));
+  a.classList.add('sel'); $(a.dataset.p).classList.add('sel');
+  if (a.dataset.p === 'p-term') { ajustar(); term.focus(); }
+  // O Monaco mede o contêiner na criação; escondido, mediria zero.
+  if (a.dataset.p === 'p-editor') { tamanhoEditor(); editor?.focus(); }
+  // Só monta o webview quando a aba é aberta — evita carregar o site
+  // de IA (e consumir rede) enquanto ninguém pediu.
+  if (a.dataset.p === 'p-gemini' && !webview) montarWebview($('site-ia').value);
+  if (a.dataset.p === 'p-ext') carregarExtensoes();
+  if (a.dataset.p === 'p-arquivo') carregarAcervo();
+  if (a.dataset.p === 'p-livraria') { carregarLivraria(); tamanhoLvEditor(); marcarTudoVisto(); }
+  if (a.dataset.p === 'p-assistente') carregarAssistente();
+  if (a.dataset.p === 'p-vscode' && !vsWebview) ligarVSCode();
+});
+
+// ── Terminal (PTY real via xterm.js) ─────────────────────────
+const term = new Terminal({
+  fontFamily: "'JetBrains Mono','Fira Code',ui-monospace,monospace",
+  fontSize: 12.5, lineHeight: 1.35, cursorBlink: true, scrollback: 8000,
+  theme: {
+    background:'#070910', foreground:'#dbe4f0', cursor:'#38bdf8',
+    selectionBackground:'rgba(56,189,248,.28)',
+    black:'#1a1f2b', red:'#fb7185', green:'#34d399', yellow:'#fbbf24',
+    blue:'#60a5fa', magenta:'#a78bfa', cyan:'#38bdf8', white:'#cbd5e1',
+    brightBlack:'#5a6678', brightRed:'#fda4af', brightGreen:'#6ee7b7',
+    brightYellow:'#fcd34d', brightBlue:'#93c5fd', brightMagenta:'#c4b5fd',
+    brightCyan:'#7dd3fc', brightWhite:'#f1f5f9',
+  },
+});
+const fit = new FitAddon.FitAddon();
+term.loadAddon(fit);
+term.open($('term'));
+
+function ajustar() {
+  try {
+    fit.fit();
+    $('term-info').textContent = `${term.cols}×${term.rows}`;
+    post('/terminal/resize', { cols: term.cols, rows: term.rows });
+  } catch {}
+}
+addEventListener('resize', ajustar);
+setTimeout(ajustar, 60);
+
+// Cada tecla vai crua para o PTY — inclusive Ctrl+C, Tab e setas.
+term.onData(d => post('/terminal/input', { data: d }));
+
+// ── Copiar e colar no terminal ───────────────────────────────
+// Como toda tecla é repassada crua para o shell, o Ctrl+C daqui virava
+// SIGINT e nunca copiava nada. Estas quatro regras resolvem, na mesma
+// convenção de qualquer terminal de Linux.
+
+async function copiarSelecao(avisar) {
+  const sel = term.getSelection();
+  if (!sel || !sel.trim()) return false;
+  try {
+    await navigator.clipboard.writeText(sel);
+    if (avisar) aviso('Copiado do terminal.');
+    return true;
+  } catch {
+    if (avisar) aviso('O navegador barrou a cópia.');
+    return false;
+  }
+}
+
+async function colarNoTerminal() {
+  try {
+    const texto = await navigator.clipboard.readText();
+    if (texto) post('/terminal/input', { data: texto });
+  } catch {
+    aviso('Não consegui ler a área de transferência. Use Ctrl+Shift+V.');
+  }
+}
+
+// 1) Selecionou com o mouse, já copiou — igual ao terminal do sistema.
+term.onSelectionChange(() => { copiarSelecao(false); });
+
+term.attachCustomKeyEventHandler((e) => {
+  if (e.type !== 'keydown') return true;
+
+  // 2) Ctrl+Shift+C copia e Ctrl+Shift+V cola (o padrão de terminal).
+  if (e.ctrlKey && e.shiftKey && e.code === 'KeyC') { copiarSelecao(true); return false; }
+  if (e.ctrlKey && e.shiftKey && e.code === 'KeyV') { colarNoTerminal(); return false; }
+
+  // 3) Ctrl+C com texto selecionado copia; sem seleção, continua sendo
+  //    o SIGINT que interrompe o programa. É o que todo mundo espera.
+  if (e.ctrlKey && !e.shiftKey && e.code === 'KeyC' && term.hasSelection()) {
+    copiarSelecao(true);
+    term.clearSelection();
+    return false;
+  }
+  return true;
+});
+
+// 4) Botão direito cola, como no terminal do Windows e do Linux.
+$('term').addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  colarNoTerminal();
+});
+
+const b64bytes = (b64) => {
+  const bin = atob(b64), a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return a;
+};
+
+assinar('/api/stream/terminal', (ev, d) => {
+  if (ev !== 'saida') return;
+  if (d.tipo === 'dados' && d.b64) term.write(b64bytes(d.b64));
+  else if (d.texto) term.write(d.texto);
+});
+
+$('b-limpar').onclick = () => {
+  if ($('p-term').classList.contains('sel')) { term.clear(); term.focus(); }
+  else { $('s-saida').textContent = ''; }
+};
+$('b-novo').onclick = async () => {
+  await post('/terminal/reset');
+  term.clear();
+  term.write('\x1b[35m• shell reiniciado\x1b[0m\r\n');
+  post('/terminal/input', { data: '\n' });
+  ajustar(); term.focus();
+};
+
+// ── Sair do que roda por cima do shell ──────────────────────
+// Claude Code, Gemini, top: uma vez abertos, tomavam conta do terminal
+// e o Ctrl+C só cancelava a tarefa da vez. O botão aparece sozinho
+// quando há algo em primeiro plano e some quando o shell volta.
+let emFoco = null, jaPediu = false;
+
+async function verPrimeiroPlano() {
+  let estado;
+  try {
+    estado = (await fetch('/api/terminal/state', { headers:H }).then(r => r.json())).estado;
+  } catch { return; }  // servidor caiu: mantém o botão como está
+  const fg = estado?.primeiroPlano || null;
+  if (fg?.pgid !== emFoco?.pgid) jaPediu = false;  // outro programa: recomeça no gentil
+  emFoco = fg;
+  const b = $('b-encerrar');
+  b.hidden = !fg;
+  if (fg) {
+    b.textContent = `■ encerrar ${fg.nome}`;
+    b.title = `Fecha o ${fg.nome} e devolve o shell (o terminal continua vivo)`;
+  }
+}
+
+$('b-encerrar').onclick = async () => {
+  // O primeiro clique pede com jeito; insistir manda SIGKILL.
+  const r = await post('/terminal/foreground/close', { sinal: jaPediu ? 'KILL' : 'TERM' });
+  aviso(r.ok
+    ? `Encerrando ${r.nome}…` + (jaPediu ? '' : ' — clique de novo se ele não sair.')
+    : (r.erro || 'Nada para encerrar.'));
+  jaPediu = true;
+  setTimeout(verPrimeiroPlano, 500);
+  term.focus();
+};
+
+setInterval(verPrimeiroPlano, 2000);
+verPrimeiroPlano();
+
+fetch('/api/terminal/state', { headers:H }).then(r => r.json()).then(r => {
+  if (!r.habilitado) {
+    term.write('\x1b[33mTerminal desabilitado.\x1b[0m Defina ENABLE_TERMINAL=true no .env.\r\n');
+  } else {
+    post('/terminal/input', { data: '\n' });  // provoca o primeiro prompt
+    term.focus();
+  }
+});
+
+// ── Aba Bot: conversa com o cerebro_bot.py ───────────────────
+// Uma pergunta por vez, cada uma num processo próprio. O histórico da
+// tela é só da página; o que o bot aprende fica no banco dele.
+
+function bolha(quem, dentro) {
+  const cx = $('bot-conversa');
+  if (cx.querySelector('.vazio')) cx.innerHTML = '';
+  const d = document.createElement('div');
+  d.style.cssText = 'padding:10px 14px;border-bottom:1px solid var(--borda)';
+  d.innerHTML = `<div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:${quem === 'Você' ? 'var(--ciano)' : 'var(--verde)'};margin-bottom:5px">
+    ${quem}</div>${dentro}`;
+  cx.appendChild(d);
+  cx.scrollTop = cx.scrollHeight;
+  return d;
+}
+
+function mostrarResposta(r) {
+  if (!r.ok) return bolha('Bot', `<span style="color:var(--rosa)">${esc(r.error || 'falhou')}</span>`);
+
+  if (r.tipo === 'receita') {
+    const linhas = (r.codigo || '').split('\n')
+      .map((l, i) => `<div><span style="color:var(--fraco)">${String(i + 1).padStart(2)} │ </span>${esc(l)}</div>`)
+      .join('');
+    return bolha('Bot', `
+      <div style="margin-bottom:7px"><b>${esc(r.titulo || '')}</b>
+        <span style="color:var(--fraco);font-size:11px">[${esc(r.linguagem_nome || '')}]</span></div>
+      <pre style="margin:0 0 8px;padding:9px 11px;background:var(--sup2);
+        border:1px solid var(--borda);overflow-x:auto;font-size:12px">${linhas}</pre>
+      <div style="color:var(--dim)">💡 ${esc(r.explicacao || '')}</div>`);
+  }
+
+  if (r.tipo === 'texto') {
+    return bolha('Bot', `
+      <div style="font-size:11px;color:var(--fraco);margin-bottom:6px">
+        📄 ${esc(r.fonte || '')} — ${esc(r.secao || '')}</div>
+      <div style="white-space:pre-wrap">${esc(r.resposta || '')}</div>`);
+  }
+
+  return bolha('Bot', `<div style="white-space:pre-wrap">${esc(r.resposta || '')}</div>`);
+}
+
+async function perguntarAoBot() {
+  const campo = $('bot-campo');
+  const pergunta = campo.value.trim();
+  if (!pergunta) return;
+  campo.value = '';
+  if (await tentarAbrir(pergunta)) { campo.focus(); return; }
+  bolha('Você', esc(pergunta));
+  const pensando = bolha('Bot', '<span style="color:var(--fraco)">pensando…</span>');
+  try {
+    const r = await post('/bot/ask', { pergunta });
+    pensando.remove();
+    mostrarResposta(r);
+    $('bot-info').textContent = r.tipo || '—';
+  } catch (e) {
+    pensando.remove();
+    bolha('Bot', `<span style="color:var(--rosa)">Falhou: ${esc(e.message)}</span>`);
+  }
+  campo.focus();
+}
+
+// "abrir X" abre no programa padrão do sistema. Só abre — quem executa
+// comando é o terminal, onde você vê a linha antes de ela rodar.
+async function tentarAbrir(texto) {
+  const m = texto.match(/^\s*(abrir|abre|abra)\s+(.+)$/i);
+  if (!m) return false;
+  const alvo = m[2].trim();
+  bolha('Você', esc(texto));
+  const r = await post('/bot/abrir', { alvo });
+  bolha('Bot', r.ok
+    ? `Abrindo <b>${esc(r.alvo)}</b> no programa padrão. 📂`
+    : `<span style="color:var(--rosa)">${esc(r.error || 'não consegui abrir')}</span>`);
+  return true;
+}
+
+// ── Corrigir código colado ───────────────────────────────────
+function alternarCodigo(mostrar) {
+  $('bot-barra-codigo').hidden = !mostrar;
+  $('bot-codigo').hidden = !mostrar;
+  if (mostrar) $('bot-codigo').focus();
+}
+$('bot-codigo-btn').onclick = () => alternarCodigo($('bot-codigo').hidden);
+$('bot-fechar-codigo').onclick = () => alternarCodigo(false);
+
+$('bot-corrigir').onclick = async () => {
+  const codigo = $('bot-codigo').value;
+  if (!codigo.trim()) return aviso('Cole um código primeiro.');
+  const linguagem = $('bot-ling').value;
+  bolha('Você', `<span style="color:var(--fraco)">[código em ${esc(linguagem)}, ` +
+    `${codigo.trim().split('\n').length} linhas]</span>`);
+  const pensando = bolha('Bot', '<span style="color:var(--fraco)">lendo o código…</span>');
+  const r = await post('/bot/corrigir', { codigo, linguagem });
+  pensando.remove();
+
+  if (r.erros && r.erros.length) {
+    const e = r.erros[0];
+    bolha('Bot', `
+      <div style="color:var(--rosa);margin-bottom:6px">
+        <b>Esse código não roda.</b> Erro na linha ${e.linha}</div>
+      <div style="color:var(--dim);margin-bottom:6px">${esc(e.mensagem || '')}</div>
+      ${e.trecho ? `<pre style="margin:0 0 8px;padding:8px 10px;background:var(--sup2);
+        border-left:2px solid var(--rosa);font-size:12px;overflow-x:auto"
+        >${esc(e.trecho)}</pre>` : ''}
+      ${e.dica ? `<div>💡 ${esc(e.dica)}</div>` : ''}`);
+    return;   // código quebrado não vira receita — primeiro conserta
+  }
+
+  const leitura = (r.leitura || []).map(l => esc(l)).join('<br>');
+  const res = r.resumo || {};
+  const caixa = bolha('Bot', `
+    <div style="color:var(--verde);margin-bottom:7px">
+      ✓ O código está válido. Isto é o que ele faz:</div>
+    <pre style="margin:0 0 8px;padding:9px 11px;background:var(--sup2);
+      border:1px solid var(--borda);font-size:12px;overflow-x:auto;
+      white-space:pre-wrap">${leitura || '(sem comandos reconhecidos)'}</pre>
+    <div style="color:var(--fraco);font-size:11px">
+      ${res.linhas || 0} linhas${res.funcoes && res.funcoes.length
+        ? ` · funções: ${esc(res.funcoes.join(', '))}` : ''}${
+        res.lacos ? ` · ${res.lacos} laço(s)` : ''}</div>`);
+
+  oferecerAprender(caixa, codigo, linguagem);
+};
+
+// Depois de ler o código, ele pergunta se quer guardar. É o bot
+// aprendendo com você em vez de só com quem escreveu as receitas.
+function oferecerAprender(caixa, codigo, linguagem) {
+  const oferta = document.createElement('div');
+  oferta.style.cssText = 'margin-top:10px;padding-top:9px;' +
+    'border-top:1px solid var(--borda);display:flex;gap:8px;align-items:center';
+  oferta.innerHTML = `
+    <span style="color:var(--dim);font-size:12px">Quer que eu aprenda esse código?</span>
+    <button class="mini p" data-sim>sim, guarda</button>
+    <button class="mini" data-nao>não</button>`;
+  caixa.appendChild(oferta);
+
+  oferta.querySelector('[data-nao]').onclick = () => {
+    oferta.innerHTML = '<span style="color:var(--fraco);font-size:11px">' +
+      'certo, não guardei.</span>';
+  };
+
+  oferta.querySelector('[data-sim]').onclick = async () => {
+    oferta.innerHTML = '<span style="color:var(--fraco);font-size:12px">guardando…</span>';
+    const r = await post('/bot/guardar', { codigo, linguagem });
+    if (r.ok) {
+      oferta.innerHTML = `
+        <span style="color:var(--verde);font-size:12px">
+          ✓ Aprendido como <b>${esc(r.titulo)}</b>
+          <span style="color:var(--fraco)"> — palavras-chave: ${esc(r.chaves)}</span>
+        </span>`;
+    } else {
+      oferta.innerHTML = `<span style="color:var(--rosa);font-size:12px">
+        não consegui guardar: ${esc(r.erro || r.error || '')}</span>`;
+    }
+  };
+}
+
+$('bot-descobrir').onclick = async () => {
+  const b = $('bot-descobrir');
+  b.disabled = true; b.textContent = 'vasculhando…';
+  bolha('Você', '<span style="color:var(--fraco)">[procurar o que falta aprender]</span>');
+  const pensando = bolha('Bot', '<span style="color:var(--fraco)">relendo tudo que já vi…</span>');
+  const r = await post('/bot/descobrir');
+  pensando.remove();
+  b.disabled = false; b.textContent = 'descobrir';
+
+  if (!r.ok || !r.novos) {
+    return bolha('Bot', `<span style="color:var(--rosa)">${esc(r.erro || r.error || 'não deu')}</span>`);
+  }
+  if (!r.novos.length) {
+    return bolha('Bot', 'Reli tudo e não achei termo novo — já sei explicar o que aparece. 😎');
+  }
+  const itens = r.novos.map(n => `
+    <div style="padding:6px 0;border-bottom:1px solid var(--borda)">
+      <b style="color:var(--ambar)">${esc(n.termo)}</b>
+      <span style="color:var(--fraco);font-size:11px"> · em ${n.trechos} trechos</span>
+      ${n.exemplo ? `<div style="color:var(--dim);font-size:11.5px;margin-top:3px">${esc(n.exemplo.slice(0,150))}…</div>` : ''}
+    </div>`).join('');
+  bolha('Bot', `
+    <div style="margin-bottom:8px">Reli ${r.lidos} arquivo(s). Estes termos
+    aparecem muito nos seus textos e eu <b>não sei explicar</b>:</div>
+    ${itens}
+    <div style="color:var(--fraco);font-size:11px;margin-top:8px">
+      Me ensine qualquer um deles no terminal, com <code>ensinar</code>.</div>`);
+};
+
+$('bot-enviar').onclick = perguntarAoBot;
+$('bot-campo').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); perguntarAoBot(); }
+});
+$('bot-limpar').onclick = () => {
+  $('bot-conversa').innerHTML = '<div class="vazio">Conversa limpa.</div>';
+  $('bot-info').textContent = '—';
+};
+
+// A conversa do dia volta do arquivo quando a aba abre — a tela é
+// descartável, o arquivo na Área de trabalho é a memória.
+fetch('/api/bot/historico', { headers: H }).then(r => r.json()).then(r => {
+  if (!r.ok || !r.texto) return;
+  const cx = $('bot-conversa');
+  cx.innerHTML = '';
+  const d = document.createElement('div');
+  d.style.cssText = 'padding:10px 14px;border-bottom:1px solid var(--borda);' +
+    'white-space:pre-wrap;color:var(--dim);font-size:12px';
+  d.textContent = r.texto.trim();
+  cx.appendChild(d);
+  const marca = document.createElement('div');
+  marca.style.cssText = 'padding:7px 14px;border-bottom:1px solid var(--borda);' +
+    'color:var(--fraco);font-size:10px;letter-spacing:.1em;text-transform:uppercase';
+  marca.textContent = '— conversa de hoje, lida do arquivo —';
+  cx.appendChild(marca);
+  cx.scrollTop = cx.scrollHeight;
+}).catch(() => {});
+
+fetch('/api/bot/state', { headers: H }).then(r => r.json()).then(r => {
+  if (r.conversas) $('bot-info').textContent = r.conversas.split('/').pop();
+  if (!r.instalado) {
+    $('bot-conversa').innerHTML =
+      '<div class="vazio">Não achei o <code>cerebro_bot.py</code>.<br>' +
+      '<span style="font-size:11px">Ele deveria estar na Área de trabalho.</span></div>';
+  }
+}).catch(() => {});
+
+// ── Scripts do Neon ──────────────────────────────────────────
+let selecionado = null;
+const bufs = {};
+
+function renderLista(est) {
+  $('lista-s').innerHTML = Object.entries(est).map(([k, s]) => `
+    <div class="s-item" data-k="${k}">
+      <div class="s-luz ${s.rodando ? 'on' : ''}"></div>
+      <div class="s-txt"><b>${esc(s.nome)}</b><span>${esc(s.descricao)}</span></div>
+      <button class="mini ${s.rodando ? 'd' : 'p'}" data-acao="${s.rodando ? 'stop' : 'start'}" data-k="${k}">
+        ${s.rodando ? 'parar' : 'rodar'}</button>
+    </div>`).join('');
+
+  $('lista-s').querySelectorAll('button').forEach(b => b.onclick = async (e) => {
+    e.stopPropagation();
+    const { k, acao } = b.dataset;
+    b.disabled = true;
+    const r = await post(`/scripts/${k}/${acao}`);
+    if (!r.ok && r.error) aviso(r.error);
+    if (acao === 'start') { selecionado = k; mostrar(); }
+    b.disabled = false;
+  });
+
+  $('lista-s').querySelectorAll('.s-item').forEach(el => el.onclick = () => {
+    selecionado = el.dataset.k; mostrar();
+  });
+}
+
+function mostrar() {
+  const buf = bufs[selecionado];
+  $('s-saida').textContent = buf && buf.length
+    ? buf.join('')
+    : (selecionado ? 'Sem saída ainda. Clique em "rodar".' : 'Selecione um script.');
+  $('s-info').textContent = selecionado || '—';
+  $('s-saida').scrollTop = $('s-saida').scrollHeight;
+}
+
+assinar('/api/stream/scripts', (ev, d) => {
+  if (ev === 'conectado') { renderLista(d); if (!selecionado) selecionado = Object.keys(d)[0]; mostrar(); return; }
+  if (ev !== 'evento') return;
+
+  bufs[d.script] = bufs[d.script] || [];
+  const buf = bufs[d.script];
+  if (d.tipo === 'inicio') buf.push(`\n─── início · ${new Date().toLocaleTimeString()} ───\n`);
+  else if (d.tipo === 'saida') buf.push(d.texto);
+  else if (d.tipo === 'fim') buf.push(`\n─── fim (código ${d.code}) ───\n`);
+  else if (d.tipo === 'erro') buf.push(`\n!! ${d.texto}\n`);
+  while (buf.length > 3000) buf.shift();
+
+  if (d.tipo === 'inicio' || d.tipo === 'fim') {
+    fetch('/api/scripts', { headers:H }).then(r => r.json()).then(r => renderLista(r.scripts));
+  }
+  if (d.script === selecionado) {
+    const grudado = $('s-saida').scrollHeight - $('s-saida').scrollTop - $('s-saida').clientHeight < 50;
+    $('s-saida').textContent = buf.join('');
+    if (grudado) $('s-saida').scrollTop = $('s-saida').scrollHeight;
+  }
+});
+
+$('b-salvar').onclick = async () => {
+  if (!selecionado) return aviso('Escolha um script primeiro.');
+  const conteudo = (bufs[selecionado] || []).join('');
+  if (!conteudo.trim()) return aviso('Não há saída para salvar.');
+  const r = await post(`/scripts/${selecionado}/save`, { conteudo });
+  aviso(r.ok ? 'Salvo em ' + r.arquivo : 'Falha: ' + r.error);
+};
+$('b-limpar-s').onclick = () => { bufs[selecionado] = []; mostrar(); };
+
+// ── Lançadores: Claude Code, Antigravity, VS Code ────────────
+fetch('/api/code/apps', { headers:H }).then(r => r.json()).then(({ apps }) => {
+  $('lancadores').innerHTML = Object.entries(apps).map(([k, a]) => `
+    <button class="mini ${a.instalado ? '' : 'off'}" data-app="${k}"
+      title="${a.instalado ? esc(a.descricao) : 'não encontrado nesta máquina'}">
+      ${esc(a.nome)}</button>`).join('');
+
+  $('lancadores').querySelectorAll('button').forEach(b => b.onclick = async () => {
+    const k = b.dataset.app;
+    if (!apps[k].instalado) return aviso(`${apps[k].nome} não está instalado.`);
+    b.disabled = true;
+    const r = await post(`/code/apps/${k}/open`);
+    if (!r.ok) aviso(r.erro || 'Falha ao abrir.');
+    else if (r.modo === 'terminal') {
+      // TUI precisa de tela: vai para o terminal do painel.
+      document.querySelector('[data-p="p-term"]').click();
+      aviso(`${apps[k].nome} aberto no terminal.`);
+    } else {
+      aviso(`${apps[k].nome} aberto em janela própria.`);
+    }
+    b.disabled = false;
+  });
+});
+
+// ── Espelho ao vivo do Claude Code ───────────────────────────
+// Segue a transcrição da sessão ativa e mostra cada arquivo escrito,
+// com destaque de sintaxe do próprio Monaco.
+const vivoBlocos = [];
+// Durante uma restauração em massa o corte pela frente fica suspenso:
+// senão o "carregar mais antigos" descartaria justamente o que trouxe.
+let restaurando = false;
+const TETO_BLOCOS = 1200;
+
+function horaDe(ts) {
+  return new Date(ts).toLocaleTimeString('pt-BR', { hour12: false });
+}
+
+async function pintar(codigo, linguagem) {
+  // O colorize do Monaco devolve HTML já destacado. Se o Monaco ainda
+  // não carregou, mostra texto puro — melhor que não mostrar nada.
+  if (typeof monaco === 'undefined' || !monaco.editor?.colorize) return esc(codigo);
+  try {
+    return await monaco.editor.colorize(codigo, linguagem || 'plaintext', { tabSize: 4 });
+  } catch {
+    return esc(codigo);
+  }
+}
+
+function visivel(ev) {
+  if (ev.tipo === 'comando' && !$('vivo-bash').checked) return false;
+  if (ev.tipo === 'fala' && !$('vivo-fala').checked) return false;
+  if (ev.tipo === 'pergunta' && !$('vivo-pergunta').checked) return false;
+  const f = $('vivo-filtro').value.trim().toLowerCase();
+  if (!f) return true;
+  return ((ev.arquivo || '') + ' ' + ev.codigo).toLowerCase().includes(f);
+}
+
+/**
+ * Markdown mínimo para a narração ficar legível.
+ * Escapa tudo primeiro e só então aplica a formatação — assim nada do
+ * texto vira HTML executável por acidente.
+ */
+function prosa(md) {
+  const fences = [];
+  let t = esc(md);
+
+  // Blocos de código saem de cena para não sofrerem as outras regras.
+  t = t.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, corpo) => {
+    fences.push(`<pre data-lang="${esc(lang || '')}"><code>${corpo.replace(/\n$/, '')}</code></pre>`);
+    return ` F${fences.length - 1} `;
+  });
+
+  const linhas = t.split('\n');
+  const saida = [];
+  let lista = null;      // 'ul' | 'ol' | null
+  let paragrafo = [];
+
+  const fecharParagrafo = () => {
+    if (paragrafo.length) { saida.push(`<p>${paragrafo.join('<br>')}</p>`); paragrafo = []; }
+  };
+  const fecharLista = () => {
+    if (lista) { saida.push(`</${lista}>`); lista = null; }
+  };
+
+  for (const linha of linhas) {
+    const l = linha.trimEnd();
+
+    if (/^ F\d+ $/.test(l.trim())) {          // bloco de código
+      fecharParagrafo(); fecharLista(); saida.push(l.trim()); continue;
+    }
+    if (!l.trim()) { fecharParagrafo(); fecharLista(); continue; }
+
+    const cab = l.match(/^(#{1,6})\s+(.*)$/);
+    if (cab) {
+      fecharParagrafo(); fecharLista();
+      const n = Math.min(cab[1].length + 1, 3);
+      saida.push(`<h${n}>${cab[2]}</h${n}>`);
+      continue;
+    }
+    if (/^&gt;\s?/.test(l)) {
+      fecharParagrafo(); fecharLista();
+      saida.push(`<blockquote>${l.replace(/^&gt;\s?/, '')}</blockquote>`);
+      continue;
+    }
+    const marc = l.match(/^\s*[-*]\s+(.*)$/);
+    const num = l.match(/^\s*\d+\.\s+(.*)$/);
+    if (marc || num) {
+      fecharParagrafo();
+      const tipo = marc ? 'ul' : 'ol';
+      if (lista !== tipo) { fecharLista(); saida.push(`<${tipo}>`); lista = tipo; }
+      saida.push(`<li>${(marc || num)[1]}</li>`);
+      continue;
+    }
+    // Item que continua na linha de baixo, indentado. Sem isto a lista
+    // era cortada no meio e a numeração recomeçava do 1 — acontecia em
+    // toda conversa colada com linhas quebradas.
+    if (lista && /^\s+\S/.test(linha) && saida.length &&
+        saida[saida.length - 1].startsWith('<li>')) {
+      saida[saida.length - 1] =
+        saida[saida.length - 1].replace(/<\/li>$/, ' ' + l.trim() + '</li>');
+      continue;
+    }
+    // Linha de tabela: vira texto simples, sem tentar montar a grade.
+    if (/^\|.*\|$/.test(l.trim())) {
+      if (/^\|[\s:|-]+\|$/.test(l.trim())) continue;   // separador
+      fecharLista();
+      paragrafo.push(l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()).join(' · '));
+      continue;
+    }
+    fecharLista();
+    paragrafo.push(l);
+  }
+  fecharParagrafo(); fecharLista();
+
+  let html = saida.join('\n');
+  // Formatação inline, aplicada depois da estrutura.
+  html = html
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+  return html.replace(/ F(\d+) /g, (_m, i) => fences[Number(i)]);
+}
+
+async function adicionarBloco(ev, animar) {
+  vivoBlocos.push(ev);
+  if (!restaurando && vivoBlocos.length > TETO_BLOCOS) vivoBlocos.shift();
+  if (!visivel(ev)) return;
+
+  const feed = $('vivo-feed');
+  if (feed.querySelector('.vazio')) feed.innerHTML = '';
+
+  const grudado = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 90;
+
+  // Narração: prosa formatada, sem cabeçalho de código.
+  if (ev.tipo === 'fala' || ev.tipo === 'pergunta') {
+    const div = document.createElement('div');
+    div.className = ev.tipo;
+    div.dataset.id = ev.id;
+    div.innerHTML = `
+      <div class="fala-quem">${ev.tipo === 'fala' ? 'Claude explica' : 'Você pediu'}
+        <span>${horaDe(ev.ts)}</span>
+        <button class="mini" data-a="livraria" title="Guardar esta conversa na livraria">livraria</button></div>
+      <div class="prosa">${prosa(ev.codigo)}</div>`;
+    div.querySelector('[data-a="livraria"]').onclick = () => guardarNaLivraria(ev);
+    feed.appendChild(div);
+    if (!restaurando) while (feed.children.length > TETO_BLOCOS) feed.removeChild(feed.firstChild);
+    if (animar) {
+      $('vivo-luz').classList.remove('novo');
+      void $('vivo-luz').offsetWidth;
+      $('vivo-luz').classList.add('novo');
+    }
+    if ($('vivo-rolar').checked && grudado) feed.scrollTop = feed.scrollHeight;
+    $('vivo-info').textContent = `${vivoBlocos.length} blocos`;
+    return;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'bloco';
+  div.dataset.id = ev.id;
+  div.innerHTML = `
+    <div class="bloco-cab">
+      <span class="marca-fer fer-${ev.ferramenta || 'Bash'}">${ev.tipo === 'comando' ? 'CMD' : (ev.ferramenta || '').toUpperCase()}</span>
+      <span class="bloco-arq">${esc(ev.nomeCurto || 'comando')}</span>
+      <span class="bloco-acoes">
+        <button class="mini" data-a="copiar">copiar</button>
+        <button class="mini" data-a="editor">no editor</button>
+        <button class="mini" data-a="livraria" title="Guardar na livraria">livraria</button>
+      </span>
+      <span class="bloco-meta">${ev.linhas} linhas · ${esc(ev.linguagem)} · ${horaDe(ev.ts)}</span>
+    </div>
+    <pre class="bloco-cod">${await pintar(ev.codigo, ev.linguagem)}</pre>`;
+
+  // Clique no cabeçalho recolhe; nos botões, não.
+  div.querySelector('.bloco-cab').onclick = (e) => {
+    if (e.target.closest('button')) return;
+    div.classList.toggle('fechado');
+  };
+  div.querySelector('[data-a="copiar"]').onclick = async () => {
+    try { await navigator.clipboard.writeText(ev.codigo); aviso('Código copiado.'); }
+    catch { aviso('Não consegui acessar a área de transferência.'); }
+  };
+  div.querySelector('[data-a="editor"]').onclick = () => {
+    if (!editor) return aviso('Editor ainda carregando.');
+    const alvo = Object.keys(langs).find(k => langs[k].monaco === ev.linguagem);
+    if (alvo) { $('lang').value = alvo; langAtual = alvo; atualizarAvisoLang(); }
+    editor.setValue(ev.codigo);
+    if (alvo) monaco.editor.setModelLanguage(editor.getModel(), ev.linguagem);
+    document.querySelector('[data-p="p-editor"]').click();
+  };
+  div.querySelector('[data-a="livraria"]').onclick = () => guardarNaLivraria(ev);
+
+  feed.appendChild(div);
+  if (!restaurando) while (feed.children.length > TETO_BLOCOS) feed.removeChild(feed.firstChild);
+
+  if (animar) {
+    $('vivo-luz').classList.remove('novo');
+    void $('vivo-luz').offsetWidth;  // reinicia a animação
+    $('vivo-luz').classList.add('novo');
+  }
+  if ($('vivo-rolar').checked && grudado) feed.scrollTop = feed.scrollHeight;
+  $('vivo-info').textContent = `${vivoBlocos.length} blocos`;
+}
+
+function redesenharVivo() {
+  const feed = $('vivo-feed');
+  feed.innerHTML = '';
+  const lista = vivoBlocos.slice();
+  vivoBlocos.length = 0;
+  if (!lista.some(visivel)) {
+    feed.innerHTML = '<div class="vazio">Nada corresponde ao filtro.</div>';
+    vivoBlocos.push(...lista);
+    return;
+  }
+  (async () => {
+    restaurando = true;
+    for (const ev of lista) await adicionarBloco(ev, false);
+    restaurando = false;
+  })();
+}
+$('vivo-filtro').addEventListener('input', redesenharVivo);
+$('vivo-bash').addEventListener('change', redesenharVivo);
+$('vivo-fala').addEventListener('change', redesenharVivo);
+$('vivo-pergunta').addEventListener('change', redesenharVivo);
+// "limpar" esvazia só a tela; o histórico em disco continua intacto.
+$('vivo-limpar').onclick = () => {
+  vivoBlocos.length = 0;
+  $('vivo-feed').innerHTML = '<div class="vazio">Tela limpa. O histórico em disco continua salvo — use “carregar mais antigos”.</div>';
+  $('vivo-info').textContent = '—';
+};
+
+/**
+ * Traz do disco os blocos anteriores ao mais antigo em tela e os
+ * insere acima, mantendo a posição de leitura onde estava.
+ */
+$('b-mais').onclick = async () => {
+  const maisAntigo = vivoBlocos[0];
+  if (!maisAntigo) return aviso('Nada em tela para buscar antes.');
+  const b = $('b-mais');
+  b.disabled = true; b.textContent = 'buscando…';
+
+  const r = await fetch(`/api/code/live/history?antes=${encodeURIComponent(maisAntigo.id)}&limite=60`,
+    { headers:H }).then(x => x.json()).catch(() => null);
+
+  if (!r?.ok || !r.eventos.length) {
+    aviso('Início do histórico.');
+    b.textContent = '▲ carregar mais antigos'; b.disabled = false;
+    return;
+  }
+
+  const feed = $('vivo-feed');
+  const alturaAntes = feed.scrollHeight;
+  const restantes = vivoBlocos.slice();
+  const tudo = [...r.eventos, ...restantes];
+
+  feed.innerHTML = '';
+  vivoBlocos.length = 0;
+  restaurando = true;
+  for (const ev of tudo) await adicionarBloco(ev, false);
+  restaurando = false;
+  // Sem isto a tela saltaria para o topo ao inserir conteúdo acima.
+  feed.scrollTop = feed.scrollHeight - alturaAntes;
+
+  b.textContent = '▲ carregar mais antigos'; b.disabled = false;
+};
+
+assinar('/api/stream/live',
+  async (ev, d) => {
+    if (ev === 'conectado') {
+      $('vivo-luz').classList.add('on');
+      $('vivo-status').textContent = d.estado.arquivo
+        ? `seguindo a sessão ${d.estado.sessao} · ${d.estado.total} blocos guardados`
+        : 'nenhuma sessão do Claude Code encontrada';
+      for (const e of d.recentes || []) await adicionarBloco(e, false);
+      // Só oferece "mais antigos" se existir algo além do que veio.
+      $('vivo-mais').hidden = (d.estado.total || 0) <= (d.recentes || []).length;
+    } else if (ev === 'codigo') {
+      await adicionarBloco(d, true);
+    } else if (ev === 'sessao') {
+      $('vivo-status').textContent = d.arquivo
+        ? `seguindo a sessão ${d.sessao}` : 'aguardando sessão';
+    }
+  },
+  (ok) => {
+    $('vivo-luz').classList.toggle('on', ok);
+    if (!ok) $('vivo-status').textContent = 'reconectando…';
+  });
+
+// ── VS Code embutido (code-server) ───────────────────────────
+let vsWebview = null;
+
+async function ligarVSCode() {
+  const b = $('vs-ligar');
+  b.disabled = true;
+  $('vs-status').textContent = 'subindo o code-server…';
+
+  const r = await post('/vscode/start');
+  if (!r.ok) {
+    $('vs-status').innerHTML = `<span class="rosa">${esc(r.erro || 'falhou')}</span>`;
+    $('caixa-vscode').innerHTML = `<div class="aviso-web">
+      <b>Não consegui subir o VS Code.</b><br><br>${esc(r.erro || '')}<br><br>
+      ${(r.estado?.log || []).slice(-4).map(l => '<code>' + esc(l) + '</code>').join('<br>')}</div>`;
+    b.disabled = false;
+    return;
+  }
+
+  const url = r.url;   // já vem com o segredo de entrada
+  $('caixa-vscode').innerHTML = '';
+  vsWebview = document.createElement('webview');
+  vsWebview.setAttribute('src', url);
+  // Sessão própria: as configurações e o login do VS Code embutido não
+  // se misturam com a aba do Gemini.
+  vsWebview.setAttribute('partition', 'persist:vscode');
+  vsWebview.setAttribute('allowpopups', 'true');
+  $('caixa-vscode').appendChild(vsWebview);
+
+  vsWebview.addEventListener('did-stop-loading', () => {
+    $('vs-status').innerHTML = '<span class="verde">ligado</span>';
+  });
+  vsWebview.addEventListener('did-fail-load', (e) => {
+    if (e.errorCode === -3) return;
+    $('vs-status').innerHTML = `<span class="rosa">${esc(e.errorDescription)}</span>`;
+  });
+
+  $('vs-url').textContent = `127.0.0.1:${r.porta}`;   // sem expor o segredo
+  b.disabled = false;
+}
+
+$('vs-ligar').onclick = ligarVSCode;
+$('vs-recarregar').onclick = () => vsWebview ? vsWebview.reload() : ligarVSCode();
+$('vs-desligar').onclick = async () => {
+  await post('/vscode/stop');
+  vsWebview = null;
+  $('caixa-vscode').innerHTML = '<div class="aviso-web">Desligado. Clique em <code>ligar</code> para subir de novo.</div>';
+  $('vs-status').textContent = 'desligado';
+  $('vs-url').textContent = '—';
+};
+
+// Se já estava no ar (você trocou de aba e voltou), reconecta sozinho.
+fetch('/api/vscode/state', { headers:H }).then(r => r.json()).then(r => {
+  if (r.rodando && r.url) { $('vs-status').innerHTML = '<span class="verde">ligado</span>'; }
+  if (!r.instalado) {
+    $('vs-status').innerHTML = '<span class="ambar">code-server não instalado</span>';
+    $('vs-ligar').disabled = true;
+  }
+});
+
+// ── Aba Gemini: site num webview isolado ─────────────────────
+// É o equivalente local a uma extensão de navegador: sessão própria
+// (partition), processo separado, nada compartilhado com o painel.
+let webview = null;
+
+function montarWebview(url) {
+  const caixa = $('caixa-webview');
+  if (!('object' === typeof window.chrome || true) || !document.createElement('webview').getWebContentsId) {
+    // Fora do Electron (ou sem webviewTag) não existe <webview>.
+    caixa.innerHTML = `<div class="aviso-web">
+      <b>O painel embutido só funciona no aplicativo.</b><br><br>
+      Você está vendo isto porque a página foi aberta fora do app do Neon.
+      Abra pelo aplicativo instalado, ou use o botão
+      <code>abrir no navegador</code>.</div>`;
+    return;
+  }
+  caixa.innerHTML = '';
+  webview = document.createElement('webview');
+  webview.setAttribute('src', url);
+  webview.setAttribute('partition', 'persist:ia');  // login sobrevive ao fechar
+  webview.setAttribute('allowpopups', 'true');
+  caixa.appendChild(webview);
+
+  webview.addEventListener('did-start-loading', () => $('g-status').textContent = 'carregando…');
+  webview.addEventListener('did-stop-loading', () => {
+    $('g-status').textContent = 'pronto';
+    $('g-url').textContent = (webview.getURL() || '').slice(0, 60);
+  });
+  webview.addEventListener('did-fail-load', (e) => {
+    if (e.errorCode === -3) return; // navegação cancelada, normal
+    $('g-status').innerHTML = `<span class="rosa">falhou: ${esc(e.errorDescription)}</span>`;
+  });
+}
+
+$('site-ia').onchange = () => montarWebview($('site-ia').value);
+$('g-recarregar').onclick = () => webview?.reload();
+$('g-voltar').onclick = () => { if (webview?.canGoBack()) webview.goBack(); };
+$('g-externo').onclick = () => {
+  const url = webview?.getURL() || $('site-ia').value;
+  window.open(url, '_blank');
+};
+
+// ── Acervo de códigos ────────────────────────────────────────
+// Todo bloco de código escrito vira arquivo em ~/neon-codigos,
+// organizado por dia. Aqui é a busca e a leitura desse acervo.
+let acSelecionado = null;
+
+async function carregarAcervo() {
+  const busca = $('ac-busca').value.trim();
+  const dentro = $('ac-conteudo').checked ? '&conteudo=1' : '';
+  $('ac-lista').innerHTML = '<div class="vazio">Buscando…</div>';
+
+  const r = await fetch(`/api/archive?busca=${encodeURIComponent(busca)}${dentro}`,
+    { headers:H }).then(x => x.json()).catch(() => null);
+
+  if (!r?.ok) {
+    $('ac-lista').innerHTML = '<div class="vazio">Não consegui ler o acervo.</div>';
+    return;
+  }
+  if (!r.itens.length) {
+    $('ac-lista').innerHTML = busca
+      ? '<div class="vazio">Nada encontrado.</div>'
+      : '<div class="vazio">Acervo vazio.<br><span style="font-size:11px">Cada código escrito é guardado aqui automaticamente.</span></div>';
+    $('ac-info').textContent = `0 de ${r.resumo.total}`;
+    return;
+  }
+
+  // Agrupa por dia, mantendo a ordem (mais recente primeiro).
+  let html = '', diaAtual = null;
+  for (const i of r.itens) {
+    if (i.data !== diaAtual) { diaAtual = i.data; html += `<div class="ac-dia">${esc(i.data)}</div>`; }
+    const kb = i.bytes < 1024 ? `${i.bytes} B` : `${(i.bytes / 1024).toFixed(1)} KB`;
+    const hora = new Date(i.ts).toLocaleTimeString('pt-BR', { hour12:false }).slice(0, 5);
+    html += `<div class="ac-item" data-c="${esc(i.caminho)}" data-l="${esc(i.linguagem)}">
+      <b>${esc(i.nome)}</b>
+      <span>${hora} · ${i.linhas} linhas · ${kb} · ${esc(i.fonte)}</span></div>`;
+  }
+  $('ac-lista').innerHTML = html;
+  $('ac-info').textContent = `${r.itens.length} de ${r.resumo.total} · ${(r.resumo.bytes / 1024).toFixed(0)} KB`;
+
+  $('ac-lista').querySelectorAll('.ac-item').forEach(el => el.onclick = () => abrirDoAcervo(el));
+}
+
+async function abrirDoAcervo(el) {
+  $('ac-lista').querySelectorAll('.ac-item').forEach(x => x.classList.remove('sel'));
+  el.classList.add('sel');
+
+  const caminho = el.dataset.c;
+  const r = await fetch(`/api/archive/file?caminho=${encodeURIComponent(caminho)}`,
+    { headers:H }).then(x => x.json()).catch(() => null);
+  if (!r?.ok) return aviso('Não consegui abrir o arquivo.');
+
+  acSelecionado = { caminho, conteudo: r.conteudo, linguagem: el.dataset.l };
+  $('ac-preview').innerHTML = await pintar(r.conteudo, el.dataset.l);
+  $('ac-preview').scrollTop = 0;
+}
+
+$('ac-atualizar').onclick = carregarAcervo;
+$('ac-conteudo').onchange = carregarAcervo;
+let tempoBusca;
+$('ac-busca').addEventListener('input', () => {
+  clearTimeout(tempoBusca);
+  tempoBusca = setTimeout(carregarAcervo, 300);   // espera parar de digitar
+});
+
+$('b-pasta-topo').onclick = async () => {
+  const r = await post('/archive/open');
+  aviso(r.ok ? 'Pasta aberta: ' + r.raiz : 'Não consegui abrir a pasta.');
+};
+$('ac-pasta').onclick = async () => {
+  const r = await post('/archive/open');
+  aviso(r.ok ? 'Pasta aberta: ' + r.raiz : 'Não consegui abrir a pasta.');
+};
+
+$('ac-copiar').onclick = async () => {
+  if (!acSelecionado) return aviso('Escolha um arquivo primeiro.');
+  try { await navigator.clipboard.writeText(acSelecionado.conteudo); aviso('Copiado.'); }
+  catch { aviso('Sem acesso à área de transferência.'); }
+};
+
+$('ac-editor').onclick = () => {
+  if (!acSelecionado) return aviso('Escolha um arquivo primeiro.');
+  if (!editor) return aviso('Editor ainda carregando.');
+  const alvo = Object.keys(langs).find(k => langs[k].monaco === acSelecionado.linguagem);
+  if (alvo) { $('lang').value = alvo; langAtual = alvo; atualizarAvisoLang(); }
+  editor.setValue(acSelecionado.conteudo);
+  if (alvo) monaco.editor.setModelLanguage(editor.getModel(), acSelecionado.linguagem);
+  document.querySelector('[data-p="p-editor"]').click();
+};
+
+// ── Assistente pago: desafios e dinheiro ─────────────────────
+// O trabalho é do assistente.py. Esta aba é a janela: mostra quanto já
+// foi gasto, deixa jogar um desafio na fila e liga/desliga o bot — tudo
+// sem abrir terminal, que era o ponto.
+let asTimer = null;
+
+const dinheiro = (v) => '$' + Number(v || 0).toFixed(4);
+
+async function carregarAssistente() {
+  const r = await fetch('/api/assistente', { headers:H })
+    .then(x => x.json()).catch(() => null);
+  if (!r?.ok) { $('as-info').textContent = 'não consegui ler o assistente'; return; }
+
+  $('as-gasto').textContent = dinheiro(r.gasto);
+  $('as-teto').textContent = 'de $' + Number(r.teto).toFixed(2) + ' de teto';
+  $('as-media').textContent = r.chamadas ? dinheiro(r.media) : '—';
+  $('as-chamadas').textContent = `${r.chamadas} chamada(s) paga(s)`;
+  $('as-cabem').textContent = r.cabem === null ? '—' : r.cabem;
+  $('as-fila').textContent = r.esperando;
+  $('as-aviso-chave').hidden = r.temChave;
+
+  // A barra fica âmbar na metade e rosa perto do teto: o susto tem que
+  // vir antes do dinheiro acabar, não depois.
+  const pct = r.teto ? Math.min(100, (r.gasto / r.teto) * 100) : 0;
+  const barra = $('as-barra');
+  barra.style.width = pct + '%';
+  barra.className = pct > 85 ? 'cheio' : pct > 50 ? 'meio' : '';
+
+  if (!$('as-teto-campo').matches(':focus')) $('as-teto-campo').value = r.teto;
+  $('as-info').textContent =
+    `${r.config?.modelo || '—'} · esforço ${r.config?.esforco || '—'}`;
+
+  // Estado do processo, tirado da aba Scripts (uma verdade só).
+  const s = await fetch('/api/scripts', { headers:H })
+    .then(x => x.json()).catch(() => null);
+  const rodando = s?.scripts?.assistente?.rodando;
+  $('as-estado-bot').textContent = rodando ? 'trabalhando agora' : 'assistente parado';
+  $('as-estado-bot').style.color = rodando ? 'var(--verde)' : 'var(--fraco)';
+  $('as-ligar').disabled = !!rodando;
+  $('as-parar').disabled = !rodando;
+
+  if (!r.desafios.length) {
+    $('as-lista').innerHTML = '<div class="vazio">Nenhum desafio ainda.<br>' +
+      '<span style="font-size:11px">Escreva acima e vá fazer outra coisa.</span></div>';
+  } else {
+    $('as-lista').innerHTML = r.desafios.map(d => `
+      <div class="as-item" data-id="${esc(d.id)}">
+        <div class="as-luz ${esc(d.estado)}"></div>
+        <div class="t">${esc(d.texto)}
+          <div class="q">${new Date(d.quando * 1000).toLocaleString('pt-BR', { hour12:false }).slice(0, 16)}
+            · ${esc(d.estado)}${d.pagina ? ' · na Livraria' : ''}</div>
+        </div>
+        ${d.pagina ? '<button class="mini p" data-a="ver">ver</button>' : ''}
+        <button class="mini d" data-a="apagar">×</button>
+      </div>`).join('');
+
+    $('as-lista').querySelectorAll('.as-item').forEach(el => {
+      el.querySelector('[data-a="apagar"]').onclick = async () => {
+        await post('/assistente/desafio/delete', { id: el.dataset.id });
+        carregarAssistente();
+      };
+      el.querySelector('[data-a="ver"]')?.addEventListener('click', () => {
+        document.querySelector('[data-p="p-livraria"]').click();
+        $('lv-busca').value = 'desafios';
+        $('lv-busca').dispatchEvent(new Event('input'));
+      });
+    });
+  }
+}
+
+$('as-mandar').onclick = async () => {
+  const texto = $('as-texto').value.trim();
+  if (!texto) return aviso('Escreva o desafio primeiro.');
+  const r = await post('/assistente/desafio', { texto });
+  if (!r.ok) return aviso('Não deu: ' + r.error);
+  $('as-texto').value = '';
+  aviso('Na fila. Ele pega na próxima volta.');
+  carregarAssistente();
+};
+
+// Ctrl+Enter manda, como em qualquer caixa decente.
+$('as-texto').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('as-mandar').click();
+});
+
+$('as-ligar').onclick = async () => {
+  const r = await post('/scripts/assistente/start');
+  aviso(r.ok ? 'Assistente ligado. Ele trabalha enquanto o PC estiver ligado.'
+             : 'Não liguei: ' + (r.motivo || r.error || ''));
+  carregarAssistente();
+};
+$('as-parar').onclick = async () => {
+  await post('/scripts/assistente/stop');
+  aviso('Assistente parado. Nada mais será gasto.');
+  carregarAssistente();
+};
+
+$('as-salvar-teto').onclick = async () => {
+  const v = parseFloat($('as-teto-campo').value.replace(',', '.'));
+  if (!(v > 0)) return aviso('Teto tem que ser um número maior que zero.');
+  const r = await post('/assistente/config', { teto_dolares: v });
+  aviso(r.ok ? `Teto agora é ${dinheiro(v)}. Vale já, sem reiniciar.`
+             : 'Não gravei: ' + r.error);
+  carregarAssistente();
+};
+
+$('as-atualizar').onclick = carregarAssistente;
+
+// Enquanto a aba estiver aberta, atualiza sozinha: dá para ver o gasto
+// subir e o desafio mudar de estado sem clicar em nada.
+(() => {
+  const ligar = () => {
+    clearInterval(asTimer);
+    if ($('p-assistente').classList.contains('sel')) {
+      asTimer = setInterval(carregarAssistente, 5000);
+    }
+  };
+  document.querySelectorAll('.aba').forEach(a => a.addEventListener('click', ligar));
+})();
+
+// ── "Chegou aula nova" ───────────────────────────────────────
+// O professor e o assistente escrevem na Livraria e vão embora. Sem
+// isto aqui, a página ficava lá esperando em silêncio e você só
+// descobria se abrisse a aba por acaso. Agora a aba acende.
+const CHAVE_VISTO = 'neon-livraria-visto';
+
+function marcarTudoVisto() {
+  try { localStorage.setItem(CHAVE_VISTO, String(Date.now())); } catch {}
+  $('selo-lv').classList.remove('ver');
+}
+
+async function conferirNovidades(avisar) {
+  let visto = 0;
+  try { visto = Number(localStorage.getItem(CHAVE_VISTO) || 0); } catch {}
+  // Primeira vez: marca o agora e não grita sobre o que já existia.
+  if (!visto) { marcarTudoVisto(); return; }
+
+  const r = await fetch('/api/library?recarregar=1', { headers:H })
+    .then(x => x.json()).catch(() => null);
+  if (!r?.ok) return;
+
+  const novas = r.itens.filter(v => v.atualizado > visto);
+  const selo = $('selo-lv');
+  if (!novas.length) { selo.classList.remove('ver'); return; }
+
+  selo.textContent = novas.length;
+  if (!selo.classList.contains('ver')) {
+    selo.classList.add('ver');
+    if (avisar) {
+      const n = novas.length;
+      aviso(n === 1
+        ? `Chegou aula nova: ${novas[0].titulo.slice(0, 46)}`
+        : `Chegaram ${n} páginas novas na Livraria`);
+    }
+  }
+}
+
+// Confere ao abrir e de dois em dois minutos. É tudo local, não custa nada.
+conferirNovidades(false);
+setInterval(() => conferirNovidades(true), 120000);
+
+// ── Livraria: o que já foi aprendido ─────────────────────────
+// O acervo guarda código solto, um arquivo por bloco. A livraria guarda
+// a conversa inteira — a explicação junto do código — em estantes, para
+// reler depois sem precisar reconstruir nada do zero. Cada página é um
+// .md de verdade em ~/neon-livraria.
+let lvItens = [], lvAberto = null, lvEditor = null, lvEditando = false;
+
+/** Como o mundo escreve a linguagem numa cerca ``` vs. como o painel a chama. */
+const APELIDOS_LANG = {
+  py:'python', python3:'python', js:'javascript', node:'javascript', mjs:'javascript',
+  cjs:'javascript', ts:'typescript', tsx:'typescript', jsx:'javascript',
+  sh:'bash', shell:'bash', zsh:'bash', console:'bash', terminal:'bash',
+  'c++':'cpp', cxx:'cpp', cc:'cpp', h:'c', hpp:'cpp',
+  golang:'go', rs:'rust', rb:'ruby', pl:'perl', yml:'yaml', md:'markdown',
+  htm:'html', jsonc:'json', sqlite:'sql', docker:'dockerfile',
+};
+
+/** Devolve a chave de linguagem do painel, ou null se não reconhecer. */
+function chaveLang(cerca) {
+  const f = String(cerca || '').toLowerCase().trim();
+  if (!f) return null;
+  if (langs[f]) return f;
+  if (APELIDOS_LANG[f] && langs[APELIDOS_LANG[f]]) return APELIDOS_LANG[f];
+  return Object.keys(langs).find(k => langs[k].monaco === f) || null;
+}
+
+async function copiarTexto(texto, msg) {
+  try {
+    await navigator.clipboard.writeText(texto);
+    aviso(msg || 'Copiado.');
+  } catch {
+    aviso('Sem acesso à área de transferência — selecione e use Ctrl+C.');
+  }
+}
+
+const soData = (ts) => new Date(ts).toLocaleString('pt-BR', { hour12:false }).slice(0, 16);
+
+// ── Lista das prateleiras ────────────────────────────────────
+async function carregarLivraria(recarregar) {
+  const busca = $('lv-busca').value.trim();
+  const dentro = $('lv-dentro').checked ? '&conteudo=1' : '';
+  const estante = $('lv-estante-f').value;
+  const qs = `busca=${encodeURIComponent(busca)}${dentro}`
+    + (estante ? `&estante=${encodeURIComponent(estante)}` : '')
+    + (recarregar ? '&recarregar=1' : '');
+
+  const r = await fetch('/api/library?' + qs, { headers:H })
+    .then(x => x.json()).catch(() => null);
+
+  if (!r?.ok) {
+    $('lv-lista').innerHTML = '<div class="vazio">Não consegui ler a livraria.</div>';
+    return;
+  }
+  lvItens = r.itens;
+  $('lv-status').textContent = r.raiz;
+  $('lv-info').textContent =
+    `${r.itens.length} de ${r.resumo.total} página(s) · ${r.resumo.blocos} bloco(s) de código`;
+
+  // Estantes: filtro do topo e sugestão do formulário.
+  const antes = $('lv-estante-f').value;
+  $('lv-estante-f').innerHTML = '<option value="">todas as estantes</option>'
+    + r.resumo.estantes.map(e =>
+        `<option value="${esc(e)}">${esc(e)} (${r.resumo.porEstante[e]})</option>`).join('');
+  $('lv-estante-f').value = r.resumo.estantes.includes(antes) ? antes : '';
+  $('lv-estantes').innerHTML = r.resumo.estantes.map(e => `<option value="${esc(e)}">`).join('');
+
+  if (!r.itens.length) {
+    $('lv-lista').innerHTML = (busca || estante)
+      ? '<div class="vazio">Nada encontrado nesta busca.</div>'
+      : `<div class="vazio">Livraria vazia.<br>
+           <span style="font-size:11px">Clique em <b>+ nova página</b>, ou use o botão
+           <b>livraria</b> em cima de qualquer bloco da aba “Ao vivo”.</span></div>`;
+    return;
+  }
+
+  let html = '', estanteAtual = null;
+  const ordenados = r.itens.slice().sort((a, b) =>
+    a.estante === b.estante ? b.atualizado - a.atualizado : a.estante.localeCompare(b.estante));
+
+  for (const v of ordenados) {
+    if (v.estante !== estanteAtual) {
+      estanteAtual = v.estante;
+      html += `<div class="lv-estante">${esc(v.estante)}</div>`;
+    }
+    const tags = v.etiquetas.slice(0, 4)
+      .map(t => `<span class="lv-tag">${esc(t)}</span>`).join('');
+    html += `<div class="lv-item" data-id="${esc(v.id)}">
+      <b>${esc(v.titulo)}</b>
+      <span class="quando">${soData(v.atualizado)} · ${v.linhas} linhas${v.blocos ? ` · ${v.blocos} código` : ''}</span>
+      ${tags ? `<div class="lv-tags">${tags}</div>` : ''}
+    </div>`;
+  }
+  $('lv-lista').innerHTML = html;
+  $('lv-lista').querySelectorAll('.lv-item').forEach(el =>
+    el.onclick = () => abrirVerbete(el.dataset.id));
+
+  if (lvAberto) {
+    const sel = $('lv-lista').querySelector(`[data-id="${CSS.escape(lvAberto.id)}"]`);
+    sel?.classList.add('sel');
+  }
+}
+
+// ── Leitura de uma página ────────────────────────────────────
+async function abrirVerbete(id) {
+  const r = await fetch(`/api/library/entry?id=${encodeURIComponent(id)}`, { headers:H })
+    .then(x => x.json()).catch(() => null);
+  if (!r?.ok) return aviso('Não consegui abrir esta página.');
+
+  lvAberto = r.verbete;
+  lvEditando = false;
+  $('lv-lista').querySelectorAll('.lv-item').forEach(x =>
+    x.classList.toggle('sel', x.dataset.id === id));
+
+  $('lv-form').hidden = true;
+  $('lv-cab').hidden = false;
+  $('lv-corpo').hidden = false;
+  $('lv-titulo').textContent = lvAberto.titulo;
+  $('lv-sub').textContent =
+    `${lvAberto.estante} · ${soData(lvAberto.atualizado)}`
+    + (lvAberto.etiquetas.length ? ` · ${lvAberto.etiquetas.join(', ')}` : '');
+
+  $('lv-corpo').innerHTML = `<div class="prosa">${prosa(lvAberto.corpo)}</div>`;
+  await enfeitarBlocos($('lv-corpo'), lvAberto.titulo);
+  $('lv-corpo').scrollTop = 0;
+}
+
+/**
+ * Cada bloco de código do texto ganha barra própria: copiar, rodar,
+ * mandar para o editor, guardar no acervo. O código cru fica preso no
+ * elemento — nada de reler do HTML na hora do clique.
+ */
+async function enfeitarBlocos(raiz, titulo) {
+  for (const pre of [...raiz.querySelectorAll('pre[data-lang]')]) {
+    const codigo = pre.textContent.replace(/\n$/, '');
+    const cerca = pre.dataset.lang || '';
+    const chave = chaveLang(cerca);
+    const l = chave ? langs[chave] : null;
+    const podeRodar = !!l?.disponivel;
+
+    const caixa = document.createElement('div');
+    caixa.className = 'lv-bloco';
+    caixa._codigo = codigo;
+    caixa._chave = chave;
+    caixa._titulo = titulo;
+    caixa.innerHTML = `
+      <div class="lv-bloco-cab">
+        <span class="lg">${esc(l?.nome || cerca || 'texto')}</span>
+        <span class="lg">${codigo.split('\n').length} ${codigo.split('\n').length === 1 ? 'linha' : 'linhas'}</span>
+        <div class="gap"></div>
+        <button class="mini" data-a="copiar">copiar</button>
+        ${podeRodar ? '<button class="mini p" data-a="rodar">▶ rodar</button>' : ''}
+        <button class="mini" data-a="editor">no editor</button>
+        <button class="mini" data-a="guardar" title="Guardar no acervo para reusar depois">guardar</button>
+      </div>`;
+
+    const corpo = document.createElement('pre');
+    corpo.innerHTML = await pintar(codigo, l?.monaco || 'plaintext');
+    caixa.appendChild(corpo);
+    pre.replaceWith(caixa);
+
+    caixa.querySelector('[data-a="copiar"]').onclick =
+      () => copiarTexto(codigo, 'Bloco copiado.');
+    caixa.querySelector('[data-a="rodar"]')?.addEventListener('click',
+      () => rodarBloco(codigo, chave));
+    caixa.querySelector('[data-a="editor"]').onclick =
+      () => mandarParaEditor(codigo, chave);
+    caixa.querySelector('[data-a="guardar"]').onclick =
+      () => guardarBloco(codigo, chave, titulo);
+  }
+}
+
+function mandarParaEditor(codigo, chave) {
+  if (!editor) return aviso('Editor ainda carregando.');
+  if (chave) {
+    rascunhos[langAtual] = editor.getValue();
+    langAtual = chave;
+    $('lang').value = chave;
+    monaco.editor.setModelLanguage(editor.getModel(), langs[chave].monaco);
+    atualizarAvisoLang();
+  }
+  editor.setValue(codigo);
+  document.querySelector('[data-p="p-editor"]').click();
+}
+
+/** Roda o bloco sem sair da livraria — a saída abre logo abaixo. */
+async function rodarBloco(codigo, chave) {
+  if (!chave || !langs[chave]?.disponivel) {
+    return aviso('Esta linguagem não roda nesta máquina — use "no editor".');
+  }
+  if (rodandoCod) return aviso('Já tem código rodando. Espere ou pare.');
+  destinoCod = 'livraria';
+  nomeExecucao = langs[chave].nome;
+  $('lv-saida').hidden = false;
+  $('lv-fechar-saida').hidden = false;
+  $('lv-saida').textContent = '';
+  const r = await post('/code/run', { linguagem: chave, codigo });
+  if (!r.ok) { aviso(r.error); escreveCod('erro: ' + r.error + '\n'); }
+}
+
+/** Guarda o bloco no acervo: da próxima vez, não se copia do zero. */
+async function guardarBloco(codigo, chave, titulo) {
+  const ext = chave ? langs[chave]?.ext : 'txt';
+  const base = String(titulo || 'trecho')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w.\-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'trecho';
+  const r = await post('/library/snippet', {
+    codigo,
+    nome: `${base}.${ext || 'txt'}`,
+    linguagem: chave ? langs[chave].monaco : 'plaintext',
+    origem: 'livraria',
+  });
+  if (!r.ok) return aviso('Não consegui guardar: ' + (r.error || ''));
+  aviso(r.jaExistia ? 'Esse código já estava no acervo.' : 'Guardado — veja na aba Arquivo.');
+}
+
+// ── Escrever e editar ────────────────────────────────────────
+const MODELO_PAGINA = [
+  '# Do que trata',
+  '',
+  'Escreva com as suas palavras o que você aprendeu aqui.',
+  '',
+  '## O código',
+  '',
+  '```python',
+  'print("cole o código aqui")',
+  '```',
+  '',
+  '## Por que funciona',
+  '',
+  '- ',
+  '',
+].join('\n');
+
+function tamanhoLvEditor() { try { lvEditor?.layout(); } catch {} }
+
+function criarLvEditor(texto) {
+  if (typeof monaco === 'undefined' || !monaco.editor) {
+    aviso('O editor ainda está carregando — tente de novo em um instante.');
+    return false;
+  }
+  if (!lvEditor) {
+    lvEditor = monaco.editor.create($('lv-editor'), {
+      value: texto,
+      language: 'markdown',
+      theme: 'neon',
+      fontFamily: "'JetBrains Mono','Fira Code',ui-monospace,monospace",
+      fontSize: 13, lineHeight: 1.6,
+      minimap: { enabled: false },
+      wordWrap: 'on',                 // é texto corrido, não só código
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      tabSize: 2,
+      padding: { top: 10 },
+    });
+    lvEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+      () => $('lv-salvar').click());
+  } else {
+    lvEditor.setValue(texto);
+  }
+  setTimeout(() => { tamanhoLvEditor(); lvEditor.focus(); }, 40);
+  return true;
+}
+
+function abrirEdicao(v) {
+  // A caixa precisa estar visível antes: o Monaco mede o contêiner na
+  // criação e, escondido, mediria zero.
+  $('lv-cab').hidden = true;
+  $('lv-corpo').hidden = true;
+  $('lv-form').hidden = false;
+  if (!criarLvEditor(v?.corpo ?? MODELO_PAGINA)) {
+    $('lv-form').hidden = true;
+    $('lv-corpo').hidden = false;
+    return;
+  }
+  lvEditando = true;
+  $('lv-f-titulo').value = v?.titulo || '';
+  $('lv-f-estante').value = v?.estante || $('lv-estante-f').value || 'geral';
+  $('lv-f-tags').value = (v?.etiquetas || []).join(', ');
+}
+
+/** Página nova, opcionalmente já com um texto colado dentro. */
+function novoVerbete(corpo, titulo) {
+  lvAberto = null;
+  $('lv-lista').querySelectorAll('.lv-item').forEach(x => x.classList.remove('sel'));
+  abrirEdicao(null);
+  if (!lvEditando) return;
+  if (corpo) lvEditor.setValue(corpo);
+  $('lv-f-titulo').value = titulo || '';
+  if (!titulo) $('lv-f-titulo').focus();
+}
+
+/** Primeira linha aproveitável do texto, para sugerir um título. */
+function tituloDe(texto) {
+  const linha = String(texto || '').split('\n')
+    .map(l => l.replace(/^#+\s*/, '').trim())
+    .find(l => l.length > 2);
+  return (linha || 'Conversa').slice(0, 70);
+}
+
+$('lv-nova').onclick = () => novoVerbete();
+$('lv-editar').onclick = () => lvAberto && abrirEdicao(lvAberto);
+
+$('lv-cancelar').onclick = () => {
+  lvEditando = false;
+  $('lv-form').hidden = true;
+  if (lvAberto) { $('lv-cab').hidden = false; $('lv-corpo').hidden = false; }
+  else {
+    $('lv-corpo').hidden = false;
+    $('lv-corpo').innerHTML = '<div class="vazio">Escolha uma página à esquerda.</div>';
+  }
+};
+
+$('lv-salvar').onclick = async () => {
+  if (!lvEditando || !lvEditor) return;
+  const titulo = $('lv-f-titulo').value.trim();
+  if (!titulo) return aviso('Dê um título — é assim que você acha depois.');
+  const r = await post('/library/entry', {
+    id: lvAberto?.id,
+    titulo,
+    estante: $('lv-f-estante').value.trim() || 'geral',
+    etiquetas: $('lv-f-tags').value,
+    corpo: lvEditor.getValue(),
+  });
+  if (!r.ok) return aviso('Não salvei: ' + r.error);
+  lvEditando = false;
+  await carregarLivraria(true);
+  await abrirVerbete(r.verbete.id);
+  aviso('Guardado na livraria.');
+};
+
+$('lv-excluir').onclick = async () => {
+  if (!lvAberto) return;
+  if (!confirm(`Excluir "${lvAberto.titulo}" da livraria?\nO arquivo .md é apagado do disco.`)) return;
+  const r = await post('/library/entry/delete', { id: lvAberto.id });
+  if (!r.ok) return aviso('Não consegui excluir.');
+  lvAberto = null;
+  $('lv-cab').hidden = true;
+  $('lv-corpo').innerHTML = '<div class="vazio">Página excluída.</div>';
+  await carregarLivraria(true);
+};
+
+$('lv-copiar-tudo').onclick = () => {
+  if (!lvAberto) return aviso('Abra uma página primeiro.');
+  copiarTexto(lvAberto.corpo, 'Página inteira copiada.');
+};
+
+// "colar conversa": traz o que está na área de transferência já como
+// rascunho de página — é o caminho mais curto do chat para a livraria.
+$('lv-colar').onclick = async () => {
+  let texto = '';
+  try { texto = await navigator.clipboard.readText(); } catch { /* sem permissão */ }
+  if (!texto.trim()) {
+    novoVerbete();
+    return aviso('Nada na área de transferência — cole com Ctrl+V no editor.');
+  }
+  novoVerbete(texto, tituloDe(texto));
+  aviso('Conversa colada. Ajuste o título, escolha a estante e salve.');
+};
+
+$('lv-pasta').onclick = async () => {
+  const r = await post('/library/open', { estante: $('lv-estante-f').value || undefined });
+  aviso(r.ok ? 'Pasta aberta: ' + r.raiz : 'Não consegui abrir a pasta.');
+};
+
+$('lv-parar').onclick = () => post('/code/stop');
+$('lv-fechar-saida').onclick = () => {
+  $('lv-saida').hidden = true;
+  $('lv-fechar-saida').hidden = true;
+};
+
+$('lv-estante-f').onchange = () => carregarLivraria();
+$('lv-dentro').onchange = () => carregarLivraria();
+let tempoLv;
+$('lv-busca').addEventListener('input', () => {
+  clearTimeout(tempoLv);
+  tempoLv = setTimeout(() => carregarLivraria(), 300);
+});
+
+/** Manda um bloco do espelho ao vivo para a livraria. */
+function guardarNaLivraria(ev) {
+  const quem = ev.tipo === 'fala' ? 'Claude explicou' : 'Você pediu';
+  const pedaco = (ev.tipo === 'fala' || ev.tipo === 'pergunta')
+    ? `## ${quem} — ${horaDe(ev.ts)}\n\n${ev.codigo}\n`
+    : `## ${ev.nomeCurto || 'comando'} — ${horaDe(ev.ts)}\n\n`
+      + '```' + (ev.linguagem || '') + '\n' + ev.codigo + '\n```\n';
+
+  document.querySelector('[data-p="p-livraria"]').click();
+
+  // Se você já está escrevendo uma página, o pedaço entra no fim dela —
+  // é assim que uma conversa longa vira uma página só.
+  if (lvEditando && lvEditor) {
+    lvEditor.setValue(lvEditor.getValue().replace(/\s*$/, '') + '\n\n' + pedaco);
+    lvEditor.revealLine(lvEditor.getModel().getLineCount());
+    return aviso('Acrescentado à página que você está escrevendo.');
+  }
+  novoVerbete(pedaco, (ev.tipo === 'fala' || ev.tipo === 'pergunta')
+    ? tituloDe(ev.codigo) : (ev.nomeCurto || 'comando'));
+  aviso('Rascunho pronto — escolha a estante e salve.');
+}
+
+// ── Botão direito: copiar, rodar, guardar ────────────────────
+// Ler no painel e não conseguir copiar era o pior defeito da livraria.
+// Aqui a seleção é livre e o botão direito abre o menu, como em
+// qualquer leitor decente.
+const menuMouse = $('menu-mouse');
+
+function fecharMenu() { menuMouse.hidden = true; }
+
+function abrirMenu(x, y, itens) {
+  menuMouse.innerHTML = '';
+  for (const it of itens) {
+    if (it === '-') { menuMouse.appendChild(document.createElement('hr')); continue; }
+    const b = document.createElement('button');
+    b.textContent = it.rot;
+    b.onclick = () => { fecharMenu(); it.fazer(); };
+    menuMouse.appendChild(b);
+  }
+  menuMouse.hidden = false;
+  const caixa = menuMouse.getBoundingClientRect();
+  menuMouse.style.left = Math.max(6, Math.min(x, innerWidth - caixa.width - 8)) + 'px';
+  menuMouse.style.top = Math.max(6, Math.min(y, innerHeight - caixa.height - 8)) + 'px';
+}
+
+addEventListener('click', fecharMenu);
+addEventListener('scroll', fecharMenu, true);
+addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharMenu(); });
+
+$('p-livraria').addEventListener('contextmenu', (e) => {
+  // Dentro do Monaco o menu é o dele, com desfazer, recortar e colar.
+  if (e.target.closest('#lv-editor')) return;
+
+  const selecao = String(getSelection() || '').trim();
+  const bloco = e.target.closest('.lv-bloco');
+  const itens = [];
+
+  if (selecao) {
+    itens.push({ rot: 'Copiar seleção', fazer: () => copiarTexto(selecao) });
+  }
+  if (bloco) {
+    itens.push({ rot: 'Copiar este bloco', fazer: () => copiarTexto(bloco._codigo, 'Bloco copiado.') });
+    if (bloco._chave && langs[bloco._chave]?.disponivel) {
+      itens.push({ rot: '▶ Rodar este bloco', fazer: () => rodarBloco(bloco._codigo, bloco._chave) });
+    }
+    itens.push({ rot: 'Abrir no editor', fazer: () => mandarParaEditor(bloco._codigo, bloco._chave) });
+    itens.push({ rot: 'Guardar no acervo', fazer: () => guardarBloco(bloco._codigo, bloco._chave, bloco._titulo) });
+  }
+  if (lvAberto && !lvEditando) {
+    if (itens.length) itens.push('-');
+    itens.push({ rot: 'Copiar a página inteira', fazer: () => copiarTexto(lvAberto.corpo, 'Página copiada.') });
+    itens.push({ rot: 'Editar esta página', fazer: () => abrirEdicao(lvAberto) });
+  }
+  if (selecao && !lvEditando) {
+    itens.push({ rot: 'Nova página com a seleção', fazer: () => novoVerbete(selecao, tituloDe(selecao)) });
+  }
+  if (itens.length) itens.push('-');
+  itens.push({ rot: '+ Nova página', fazer: () => novoVerbete() });
+  itens.push({ rot: 'Colar conversa aqui', fazer: () => $('lv-colar').click() });
+
+  e.preventDefault();
+  abrirMenu(e.clientX, e.clientY, itens);
+});
+
+// ── Extensões do VS Code ─────────────────────────────────────
+async function carregarExtensoes() {
+  $('lista-ext').innerHTML = '<div class="vazio">Consultando o VS Code…</div>';
+  const r = await fetch('/api/extensions', { headers:H }).then(x => x.json());
+
+  if (!r.disponivel) {
+    $('lista-ext').innerHTML = `<div class="vazio">
+      O comando <code>code</code> do VS Code não foi encontrado.<br>
+      Instale o VS Code para gerenciar extensões por aqui.</div>`;
+    return;
+  }
+
+  const grupos = {};
+  for (const s of r.sugeridas) (grupos[s.grupo] ||= []).push(s);
+
+  // Instaladas que não estão na lista de sugestões.
+  const idsSugeridos = new Set(r.sugeridas.map(s => s.id.toLowerCase()));
+  const extras = r.instaladas.filter(e => !idsSugeridos.has(e.id.toLowerCase()));
+
+  let html = '';
+  for (const [grupo, itens] of Object.entries(grupos)) {
+    html += `<div class="ext-grupo">${esc(grupo)}</div>` + itens.map(s => `
+      <div class="ext-item">
+        <div class="ext-luz ${s.instalada ? 'on' : ''}"></div>
+        <div class="ext-txt">
+          <b>${esc(s.nome)}</b>
+          <span>${esc(s.descricao)}</span>
+          <code>${esc(s.id)}${s.versao ? ' · ' + esc(s.versao) : ''}</code>
+        </div>
+        <button class="mini ${s.instalada ? 'd' : 'p'}"
+          data-id="${esc(s.id)}" data-acao="${s.instalada ? 'uninstall' : 'install'}">
+          ${s.instalada ? 'remover' : 'instalar'}</button>
+      </div>`).join('');
+  }
+  if (extras.length) {
+    html += `<div class="ext-grupo">Outras instaladas</div>` + extras.map(e => `
+      <div class="ext-item">
+        <div class="ext-luz on"></div>
+        <div class="ext-txt"><b>${esc(e.id.split('.').pop())}</b>
+          <code>${esc(e.id)} · ${esc(e.versao)}</code></div>
+        <button class="mini d" data-id="${esc(e.id)}" data-acao="uninstall">remover</button>
+      </div>`).join('');
+  }
+
+  $('lista-ext').innerHTML = html;
+  $('ext-info').textContent = `${r.instaladas.length} instaladas`;
+
+  $('lista-ext').querySelectorAll('button').forEach(b => b.onclick = async () => {
+    const { id, acao } = b.dataset;
+    const antes = b.textContent;
+    b.disabled = true;
+    b.textContent = acao === 'install' ? 'instalando…' : 'removendo…';
+    const r2 = await post(`/extensions/${acao}`, { id });
+    aviso(r2.ok
+      ? `${id} ${acao === 'install' ? 'instalada' : 'removida'}. Reinicie o VS Code.`
+      : `Falha: ${r2.error}`);
+    b.textContent = antes;
+    b.disabled = false;
+    carregarExtensoes();
+  });
+}
+
+$('ext-recarregar').onclick = carregarExtensoes;
+$('ext-instalar').onclick = async () => {
+  const id = $('ext-id').value.trim();
+  if (!id) return aviso('Informe o id no formato publicador.nome.');
+  $('ext-instalar').disabled = true;
+  const r = await post('/extensions/install', { id });
+  aviso(r.ok ? `${id} instalada. Reinicie o VS Code.` : `Falha: ${r.error}`);
+  $('ext-instalar').disabled = false;
+  if (r.ok) { $('ext-id').value = ''; carregarExtensoes(); }
+};
+
+// ── Editor de código ─────────────────────────────────────────
+let editor = null, langs = {}, langAtual = 'python', rodandoCod = false;
+const rascunhos = {};
+
+function tamanhoEditor() { try { editor?.layout(); } catch {} }
+
+require.config({ paths: { vs: '/vendor/monaco/vs' } });
+require(['vs/editor/editor.main'], async () => {
+  monaco.editor.defineTheme('neon', {
+    base: 'vs-dark', inherit: true, rules: [],
+    colors: {
+      'editor.background': '#070910',
+      'editorGutter.background': '#070910',
+      'editorLineNumber.foreground': '#3d4757',
+      'editorLineNumber.activeForeground': '#8b97ab',
+      'editor.lineHighlightBackground': '#0f141d',
+      'editorCursor.foreground': '#38bdf8',
+      'editor.selectionBackground': '#1d4d63',
+    },
+  });
+
+  const r = await fetch('/api/code/languages', { headers:H }).then(x => x.json());
+  langs = r.linguagens;
+
+  // Executáveis primeiro; o resto serve para escrever, destacar e salvar.
+  const podem = Object.entries(langs).filter(([, l]) => l.disponivel);
+  const naoPodem = Object.entries(langs).filter(([, l]) => l.executavel && !l.disponivel);
+  const soTexto = Object.entries(langs).filter(([, l]) => !l.executavel);
+  const grupo = (rot, itens, sufixo = '') => itens.length
+    ? `<optgroup label="${rot}">` + itens.map(([k, l]) =>
+        `<option value="${k}">${esc(l.nome)}${sufixo}</option>`).join('') + '</optgroup>'
+    : '';
+  $('lang').innerHTML =
+    grupo('Roda aqui', podem) +
+    grupo('Precisa instalar', naoPodem, ' ⚠') +
+    grupo('Só escrever/salvar', soTexto);
+
+  editor = monaco.editor.create($('editor'), {
+    value: langs[langAtual]?.exemplo || '',
+    language: langs[langAtual]?.monaco || 'python',
+    theme: 'neon',
+    fontFamily: "'JetBrains Mono','Fira Code',ui-monospace,monospace",
+    fontSize: 13, lineHeight: 1.5,
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    tabSize: 4,
+    renderLineHighlight: 'line',
+    padding: { top: 8 },
+  });
+
+  $('lang').value = langAtual;
+  atualizarAvisoLang();
+
+  // Ctrl+Enter roda, como em qualquer console decente.
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => $('b-rodar').click());
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => $('b-salvar-cod').click());
+});
+
+function atualizarAvisoLang() {
+  const l = langs[langAtual];
+  if (!l) return;
+  const podeRodar = l.disponivel;
+  $('b-rodar').disabled = !podeRodar || rodandoCod;
+  $('ed-aviso').innerHTML = podeRodar
+    ? `<span class="verde">▶ Ctrl+Enter roda</span> · Ctrl+S salva`
+    : l.executavel
+      ? `<span class="ambar">⚠ precisa de "${esc(l.requer)}" instalado para executar</span>`
+      : `esta linguagem serve para escrever e salvar`;
+  $('ed-info').textContent = l.nome;
+}
+
+$('lang').onchange = () => {
+  if (editor) rascunhos[langAtual] = editor.getValue();   // não perde o que estava escrito
+  langAtual = $('lang').value;
+  const l = langs[langAtual];
+  const texto = rascunhos[langAtual] ?? l.exemplo ?? '';
+  editor.setValue(texto);
+  monaco.editor.setModelLanguage(editor.getModel(), l.monaco);
+  atualizarAvisoLang();
+  editor.focus();
+};
+
+// O mesmo motor de execução serve o editor e a livraria; `destinoCod`
+// diz em qual das duas telas a saída deve aparecer.
+let destinoCod = 'editor', nomeExecucao = '';
+const saidaAtual = () => destinoCod === 'livraria' ? $('lv-saida') : $('cod-saida');
+
+function escreveCod(t) {
+  const el = saidaAtual();
+  const grudado = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+  el.textContent += t;
+  if (grudado) el.scrollTop = el.scrollHeight;
+}
+
+$('b-rodar').onclick = async () => {
+  if (!editor || rodandoCod) return;
+  destinoCod = 'editor';
+  nomeExecucao = '';
+  $('cod-saida').textContent = '';
+  const r = await post('/code/run', { linguagem: langAtual, codigo: editor.getValue() });
+  if (!r.ok) { aviso(r.error); escreveCod('erro: ' + r.error + '\n'); }
+};
+$('b-parar').onclick = () => post('/code/stop');
+$('b-limpar-cod').onclick = () => { $('cod-saida').textContent = ''; };
+
+$('b-copiar').onclick = async () => {
+  if (!editor) return;
+  try {
+    await navigator.clipboard.writeText(editor.getValue());
+    aviso('Código copiado.');
+  } catch {
+    // Sem permissão de área de transferência: seleciona para copiar à mão.
+    editor.setSelection(editor.getModel().getFullModelRange());
+    editor.focus();
+    aviso('Selecionado — use Ctrl+C.');
+  }
+};
+
+$('b-salvar-cod').onclick = async () => {
+  if (!editor) return;
+  const nome = prompt('Nome do arquivo (deixe vazio para gerar automático):', '');
+  if (nome === null) return;
+  const r = await post('/code/save', { linguagem: langAtual, codigo: editor.getValue(), nome });
+  aviso(r.ok ? 'Salvo em ' + r.arquivo : 'Falha: ' + r.error);
+};
+
+assinar('/api/stream/code', (ev, d) => {
+  if (ev === 'conectado') return;
+  if (ev !== 'evento') return;
+  if (d.tipo === 'inicio') {
+    rodandoCod = true;
+    $('b-rodar').disabled = true; $('b-parar').disabled = false;
+    $('lv-parar').hidden = destinoCod !== 'livraria';
+    escreveCod(`─── executando ${nomeExecucao || langs[langAtual]?.nome || ''} ───\n`);
+  } else if (d.tipo === 'saida' || d.tipo === 'erro') {
+    escreveCod(d.texto || '');
+  } else if (d.tipo === 'fim') {
+    rodandoCod = false;
+    $('b-parar').disabled = true;
+    $('lv-parar').hidden = true;
+    atualizarAvisoLang();
+    escreveCod(`\n─── fim (código ${d.code}, ${d.ms} ms) ───\n`);
+  }
+});
+
+// Divisória arrastável entre editor e saída.
+(() => {
+  const div = $('arraste'), saida = $('cod-saida');
+  let arrastando = false;
+  div.addEventListener('mousedown', (e) => { arrastando = true; e.preventDefault(); });
+  addEventListener('mouseup', () => { arrastando = false; });
+  addEventListener('mousemove', (e) => {
+    if (!arrastando) return;
+    const caixa = $('p-editor').getBoundingClientRect();
+    const alt = Math.min(Math.max(caixa.bottom - e.clientY - 34, 60), caixa.height - 160);
+    saida.style.height = alt + 'px';
+    tamanhoEditor();
+  });
+})();
+
+</script>
+</body>
+</html>

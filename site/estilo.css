@@ -1,0 +1,278 @@
+/* ============================================================
+   Núcleo de Segurança Neon — a folha de estilo do site.
+
+   Um arquivo só, usado por TODAS as páginas. Muda a cor aqui,
+   muda no site inteiro. É o mesmo princípio do cerebro.db: uma
+   fonte de verdade, e não uma cópia em cada lugar.
+
+   Como usar numa página nova:
+       <link rel="stylesheet" href="../estilo.css">
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   1) AS CORES
+
+   Estão como "variáveis de CSS" (as que começam com --). Você
+   escreve o valor uma vez aqui e usa pelo nome lá embaixo. É a
+   mesma ideia de variável do Python: caixinha com nome.
+
+   Repara que nenhuma cor é cinza puro (#888) nem branco puro
+   (#fff). O papel é um branco levemente quente, a tinta é um
+   preto levemente azulado. Cinza puro parece coisa que ninguém
+   escolheu; um cinza com um pingo de cor parece escolhido.
+   ------------------------------------------------------------ */
+
+:root{
+  --papel:       #f6f6f4;   /* o fundo da página     */
+  --caixa:       #fdfdfc;   /* o fundo dos códigos   */
+  --linha:       #d8d8d2;   /* risco fino, divisão   */
+  --linha-forte: #8f8f88;   /* risco grosso, título  */
+  --tinta:       #16181a;   /* o texto de ler        */
+  --dim:         #4d5157;   /* texto secundário      */
+  --fraco:       #82868c;   /* etiqueta, rodapé      */
+
+  /* As três cores com significado. Não são enfeite: cada uma
+     quer dizer uma coisa e só aparece quando aquilo é verdade. */
+  --azul:     #0f5f86;   /* conceito, nome de coisa técnica */
+  --vermelho: #9d2235;   /* o erro                          */
+  --verde:    #186a4a;   /* a correção                      */
+
+  --mono:  'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+  color-scheme: light dark;
+}
+
+/* O tema escuro. São as MESMAS variáveis, com outros valores —
+   por isso nada lá embaixo precisa saber que existe tema escuro.
+
+   As cores fortes clareiam: #9d2235 é lindo no papel branco e
+   some no fundo preto. Cor escura em fundo escuro não se lê. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --papel:       #0c0e11;
+    --caixa:       #14171b;
+    --linha:       #272b31;
+    --linha-forte: #5b626b;
+    --tinta:       #e2e5e9;
+    --dim:         #a7adb6;
+    --fraco:       #727982;
+    --azul:        #6fc5ec;
+    --vermelho:    #f28a9c;
+    --verde:       #5ecfa2;
+  }
+}
+
+/* E de novo, para quem escolheu o escuro na mão em vez de deixar
+   o sistema decidir. Repetir aqui é chato, mas é o que faz o
+   botão de tema funcionar nos dois sentidos. */
+:root[data-theme="dark"]{
+  --papel:       #0c0e11;
+  --caixa:       #14171b;
+  --linha:       #272b31;
+  --linha-forte: #5b626b;
+  --tinta:       #e2e5e9;
+  --dim:         #a7adb6;
+  --fraco:       #727982;
+  --azul:        #6fc5ec;
+  --vermelho:    #f28a9c;
+  --verde:       #5ecfa2;
+}
+
+
+/* ------------------------------------------------------------
+   2) AS LETRAS
+
+   Duas famílias, cada uma com um trabalho:
+
+   SERIF  (Source Serif 4)  — o texto de ler. Serifa é aquele
+          pezinho no fim da letra. Ele guia o olho na linha e
+          cansa menos em texto longo. Por isso jornal e livro
+          usam serifa há 300 anos.
+
+   MONO   (JetBrains Mono)  — código e etiqueta. Toda letra
+          ocupa a mesma largura, então a coluna 12 é a coluna 12
+          em todas as linhas. Em código isso não é gosto: é o
+          que faz a indentação ficar reta.
+
+   A regra que faz a página parecer profissional: NUNCA use a
+   fonte de código para texto corrido, nem a de texto para
+   código. Cada uma no seu lugar.
+   ------------------------------------------------------------ */
+
+*{ box-sizing: border-box; }
+
+body{
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--serif);
+  font-size: 17.5px;
+  line-height: 1.6;          /* respiro entre as linhas */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A largura da coluna é a decisão de leitura mais importante da
+   página. 790px dá umas 70 letras por linha. Linha muito longa,
+   o olho se perde na volta; muito curta, quebra o pensamento. */
+.folha{ max-width: 790px; margin: 0 auto; padding: 0 26px 90px; }
+
+h1{
+  font-weight: 700;
+  font-size: clamp(32px, 6vw, 52px);  /* encolhe sozinho no celular */
+  line-height: 1.04;
+  letter-spacing: -.02em;   /* título grande pede letra mais junta */
+  margin: 14px 0 12px;
+  text-wrap: balance;       /* não deixa uma palavra sozinha na última linha */
+}
+
+h2{ font-weight:700; font-size:27px; letter-spacing:-.015em; margin:6px 0 12px; text-wrap:balance; }
+h3{ font-weight:700; font-size:22px; letter-spacing:-.01em;  margin:0 0 3px; }
+
+/* A "sobrancelha": a etiqueta pequena em cima do título.
+   Maiúscula pequena precisa de espaço entre as letras, senão
+   as palavras viram um bloco só e ninguém lê. */
+.eyebrow{
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--fraco);
+  margin: 0;
+}
+
+.sub{ font-size:19px; color:var(--dim); margin:0; max-width:56ch; }
+.intro{ color:var(--dim); margin:0 0 8px; max-width:60ch; }
+
+header.capa{ padding:60px 0 26px; border-bottom:1px solid var(--linha-forte); }
+section{ padding-top:54px; }
+
+
+/* ------------------------------------------------------------
+   3) A RECEITA — os quatro passos de toda aula
+   ------------------------------------------------------------ */
+
+.receita{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0 26px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--linha);
+}
+.receita div{ padding-bottom:14px; }
+.receita b{
+  display:block; font-family:var(--mono); font-size:11px;
+  letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px;
+}
+.receita p{ margin:0; font-size:15px; color:var(--dim); line-height:1.45; }
+
+/* Cada passo: etiqueta à esquerda, conteúdo à direita. */
+.passo{
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 0 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--linha);
+}
+.passo > .rot{
+  font-family:var(--mono); font-size:10.5px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--fraco);
+  padding-top:4px;
+}
+.rot.erro{ color:var(--vermelho); }
+.rot.ok  { color:var(--verde); }
+.passo > div > p{ margin:0 0 9px; }
+.passo > div > *:last-child{ margin-bottom:0; }
+
+.peca{ margin-top:40px; }
+.peca > h3{
+  display:flex; gap:14px; align-items:baseline;
+  padding-bottom:9px; border-bottom:1px solid var(--linha-forte);
+}
+.peca > h3 .n{
+  font-family:var(--mono); font-size:14px; font-weight:700;
+  color:var(--fraco); flex:none; font-variant-numeric:tabular-nums;
+}
+.conceito{ font-family:var(--mono); font-size:12px; color:var(--azul); margin:9px 0 4px; }
+
+
+/* ------------------------------------------------------------
+   4) O CÓDIGO
+
+   A borda da esquerda é quem conta a história antes de você ler:
+   vermelha = o jeito errado, verde = o jeito certo. Dá pra
+   entender a página passando o olho, sem ler uma palavra.
+
+   overflow-x: auto é obrigatório. Sem ele, uma linha comprida
+   de código empurra a página inteira pro lado no celular.
+   ------------------------------------------------------------ */
+
+pre{
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  background: var(--caixa);
+  border: 1px solid var(--linha);
+  border-left: 2px solid var(--linha-forte);
+  padding: 10px 12px;
+  margin: 0 0 9px;
+  overflow-x: auto;
+}
+pre.antes { border-left-color: var(--vermelho); }
+pre.depois{ border-left-color: var(--verde); }
+pre.saida { border-left-color: var(--linha-forte); color: var(--dim); }
+
+.com{ color:var(--fraco); }                       /* comentário dentro do código */
+p code, li code{ font-family:var(--mono); font-size:.85em; color:var(--azul); }
+pre code{ font-family:var(--mono); color:inherit; }
+
+.fonte{ font-family:var(--mono); font-size:11.5px; color:var(--fraco); margin:9px 0 0; line-height:1.6; }
+.fonte b{ color:var(--dim); font-weight:400; }
+
+
+/* ------------------------------------------------------------
+   5) LISTA DE REGRAS — termo à esquerda, explicação à direita
+   ------------------------------------------------------------ */
+
+ul.regras{ list-style:none; padding:0; margin:14px 0 0; }
+ul.regras li{
+  display:grid; grid-template-columns:150px 1fr; gap:0 20px;
+  padding:12px 0; border-bottom:1px solid var(--linha);
+}
+ul.regras b{ font-family:var(--mono); font-size:12px; font-weight:700; color:var(--azul); line-height:1.6; }
+ul.regras span{ color:var(--dim); }
+
+/* A frase que fecha a aula. Uma por página, no máximo. */
+.regra-final{
+  margin-top:34px; padding:18px 0 0; border-top:1px solid var(--linha-forte);
+  font-size:20px; line-height:1.45; color:var(--tinta); max-width:58ch;
+}
+
+.fim{
+  margin-top:56px; padding-top:16px; border-top:1px solid var(--linha-forte);
+  font-family:var(--mono); font-size:11.5px; color:var(--fraco);
+}
+
+a{ color:var(--azul); }
+a:focus-visible, button:focus-visible{ outline:2px solid var(--azul); outline-offset:2px; }
+
+
+/* ------------------------------------------------------------
+   6) CELULAR
+
+   As colunas de duas faixas viram uma só. Nada de esconder
+   conteúdo: no celular a página fica mais comprida, não menor.
+   ------------------------------------------------------------ */
+
+@media (max-width:600px){
+  body{ font-size:16.5px; }
+  .passo{ grid-template-columns:1fr; gap:6px; }
+  .passo > .rot{ padding-top:0; }
+  ul.regras li{ grid-template-columns:1fr; gap:3px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; }
+}

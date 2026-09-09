@@ -1,0 +1,105 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Servidor Express direto do TS, com watch e breakpoints.
+      "name": "Neon: servidor (tsx watch)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "runtimeArgs": ["watch"],
+      "program": "${workspaceFolder}/src/server.ts",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      // App desktop. Compila antes, porque o main.cjs importa o dist/.
+      // ELECTRON_RUN_AS_NODE precisa sair do ambiente, senão o electron
+      // sobe como node puro (é o mesmo motivo do `env -u` no npm script).
+      "name": "Neon: app Electron (main)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "args": ["."],
+      "env": { "ELECTRON_RUN_AS_NODE": null },
+      "preLaunchTask": "npm: build",
+      "outputCapture": "std",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      // Igual ao anterior, mas com a porta de debug do renderer aberta:
+      // use junto com "Neon: renderer (attach)".
+      "name": "Neon: app Electron (main + renderer)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "args": [".", "--remote-debugging-port=9222"],
+      "env": { "ELECTRON_RUN_AS_NODE": null },
+      "preLaunchTask": "npm: build",
+      "outputCapture": "std",
+      "console": "integratedTerminal"
+    },
+    {
+      // Anexa no dashboard.html (Monaco/xterm) rodando dentro do Electron.
+      "name": "Neon: renderer (attach)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/public",
+      "timeout": 30000
+    },
+    {
+      // Painel servido pelo `npm run dev`, no navegador.
+      "name": "Neon: painel no navegador",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://127.0.0.1:3000/",
+      "webRoot": "${workspaceFolder}/public"
+    },
+    {
+      "name": "Python: arquivo atual",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: neon_daemon.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/neon_daemon.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python: neon_watchdog.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/neon_watchdog.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Python: neon_ai_monitor.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/neon_ai_monitor.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Neon: Electron completo (main + renderer)",
+      "configurations": ["Neon: app Electron (main + renderer)", "Neon: renderer (attach)"],
+      "stopAll": true
+    }
+  ]
+}

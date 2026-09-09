@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>O arquivo que rodava sozinho</title>
+<meta name="description" content="Código solto no corpo do arquivo roda na hora do import — e leva junto uma conexão de banco que ninguém pediu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<div class="folha">
+
+<header class="capa">
+  <p class="eyebrow">Núcleo de Segurança Neon · aula 02</p>
+  <h1>O arquivo que rodava sozinho</h1>
+  <p class="sub">Um <code>import</code> em qualquer lugar do projeto já abria uma
+  conexão com o banco. Ninguém tinha pedido.</p>
+</header>
+
+<section>
+  <p class="eyebrow">a receita, igual em toda aula</p>
+  <div class="receita">
+    <div><b style="color:var(--vermelho)">1 · o erro</b><p>O código errado, como quase todo mundo faz.</p></div>
+    <div><b>2 · o porquê</b><p>Por que aquilo é perigoso, em português.</p></div>
+    <div><b style="color:var(--verde)">3 · a correção</b><p>O código certo.</p></div>
+    <div><b>4 · a prova</b><p>O terminal respondendo.</p></div>
+  </div>
+</section>
+
+<section>
+  <article class="peca">
+    <h3><span class="n">02</span> Tudo solto no corpo do arquivo</h3>
+    <p class="conceito">o que roda no import</p>
+
+    <div class="passo"><div class="rot erro">1 · o erro</div><div>
+      <p>A primeira versão do arquivo, salva antes da revisão. Repare que não
+      existe nenhuma função: tudo está no corpo, colado na margem esquerda.</p>
+      <pre class="antes"><code>import os
+import psycopg2
+from neon_config import carregar_env
+
+<span class="com"># Garante o carregamento do .env</span>
+carregar_env()
+
+print("Iniciando o Núcleo de Segurança Neon...")
+
+conexao = None
+
+try:
+    host = os.environ.get("NEON_DB_HOST", "127.0.0.1")</code></pre>
+    </div></div>
+
+    <div class="passo"><div class="rot">2 · o porquê</div><div>
+      <p>Em Python, <b>importar um arquivo é executar o arquivo</b>. Não existe
+      "só carregar as funções": o interpretador lê de cima a baixo e faz o que
+      estiver escrito.</p>
+      <p>Então no dia em que outro arquivo do projeto escrevesse:</p>
+      <pre class="antes"><code>import neon_core</code></pre>
+      <p>...ele levaria junto, sem pedir e sem avisar: o <code>.env</code> lido,
+      uma frase impressa na tela e <b>uma conexão aberta com o banco de dados</b>.</p>
+      <p>Um teste automatizado que importasse o módulo abriria conexão. Um script
+      de build, idem. E o dia em que o banco estivesse fora do ar, o
+      <code>import</code> quebraria — um <code>import</code>, não uma chamada.</p>
+      <p>A regra: <b>código no corpo do arquivo roda no import. Código dentro de
+      função roda quando alguém chama.</b> A diferença só aparece no dia do
+      acidente, e aí já é tarde.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot ok">3 · a correção</div><div>
+      <p>Tudo que <em>faz</em> alguma coisa entrou numa função com nome e com
+      docstring dizendo o que ela devolve:</p>
+      <pre class="depois"><code>def testar_conexao() -&gt; bool:
+    """Abre, valida e fecha uma conexão. True se o banco respondeu."""
+    try:
+        import psycopg2
+    except ImportError:
+        print("[ BLOQUEIO ] psycopg2 não instalado. Rode: pip install -r requirements.txt")
+        return False</code></pre>
+      <p>Repare que até o <code>import psycopg2</code> desceu para dentro da
+      função. Assim quem só quer ler uma constante do módulo não precisa ter a
+      biblioteca do Postgres instalada.</p>
+      <p>E a fechadura fica fechada de verdade, com o <code>finally</code>:</p>
+      <pre class="depois"><code>    finally:
+        if conexao is not None:
+            conexao.close()
+            print("[ INFO ] Conexão encerrada com segurança.")</code></pre>
+      <p>Por fim, as duas linhas no fim do arquivo que separam <b>rodar</b> de
+      <b>importar</b> — as mais importantes da aula:</p>
+      <pre class="depois"><code>if __name__ == "__main__":
+    print("Iniciando o Núcleo de Segurança Neon...")
+    sys.exit(0 if testar_conexao() else 1)</code></pre>
+      <p><code>__name__</code> vale <code>"__main__"</code> quando <em>você</em>
+      chamou o arquivo pelo terminal, e vale o nome do módulo quando alguém
+      importou. Uma linha, e o arquivo passa a saber a diferença.</p>
+    </div></div>
+
+    <div class="passo"><div class="rot">4 · a prova</div><div>
+      <p>A saída do arquivo antigo, com tudo solto — ele tenta conectar assim que
+      é lido, e falha em público:</p>
+      <pre class="saida"><code>$ python3 neon_core.py
+Iniciando o Núcleo de Segurança Neon...
+[ BLOQUEIO ] Falha na invasão autorizada: connection to server at "127.0.0.1",
+port 5432 failed: fe_sendauth: no password supplied</code></pre>
+      <p>E o antes e o depois lado a lado, feito pelo próprio Git:</p>
+      <pre class="depois"><code>diff -u original_ia/neon_core.py neon_core.py</code></pre>
+      <p>Guardar a primeira geração do código numa pasta <code>original_ia/</code>
+      antes de revisar é o que torna esta aula possível. O erro tem endereço.</p>
+    </div></div>
+
+    <p class="fonte">antes · <b>original_ia/neon_core.py</b> linhas 1–13 &nbsp;→&nbsp;
+    agora · <b>neon_core.py</b> — a saída é da captura de <b>4 de setembro de 2026, 10:08</b></p>
+  </article>
+</section>
+
+<section>
+  <p class="eyebrow">para levar</p>
+  <p class="regra-final">Importar é executar. Se o arquivo faz alguma coisa
+  quando é lido, ele vai fazer essa coisa no pior momento possível — no meio de
+  um teste, de um build, ou de um dia em que o banco caiu.</p>
+</section>
+
+<p class="fim">Núcleo de Segurança Neon · aula 02 de 6 · todo código desta página
+foi copiado de um arquivo real do projeto — nenhum exemplo foi inventado</p>
+
+</div>
+</body>
+</html>
