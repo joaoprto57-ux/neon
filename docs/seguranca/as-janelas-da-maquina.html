@@ -10,16 +10,21 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
 <link rel="stylesheet" href="../estilo.css">
 </head>
-<body>
+<body class="tem-lua">
 
-<div class="folha">
+<canvas id="lua"></canvas>
 
-<header class="capa">
+<section class="capa-lua">
   <p class="eyebrow">Núcleo de Segurança Neon · aula 01</p>
   <h1>As janelas da máquina</h1>
   <p class="sub">Quantas portas o seu computador tem abertas agora? Quase ninguém
   sabe responder — e essa é a aula inteira.</p>
-</header>
+  <a class="desce" href="#conteudo">começar <span>↓</span></a>
+</section>
+
+<div class="folha" id="conteudo">
+
+
 
 <section>
   <p class="eyebrow">a receita, igual em toda aula</p>
@@ -141,6 +146,9 @@ Alvo: 127.0.0.1 | Porta 5432: [ ABERTA ]</code></pre>
 foi copiado de um arquivo real do projeto — nenhum exemplo foi inventado</p>
 
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../lua.js"></script>
 
 </body>
 </html>

@@ -276,3 +276,68 @@ a:focus-visible, button:focus-visible{ outline:2px solid var(--azul); outline-of
 @media (prefers-reduced-motion: reduce){
   *{ animation:none !important; transition:none !important; }
 }
+
+
+/* ------------------------------------------------------------
+   7) A CAPA COM A LUA
+
+   A primeira tela de cada aula: céu preto, a lua explodindo
+   conforme você rola, e o título por cima. Quando a rolagem
+   passa da primeira tela, o papel da aula sobe e cobre tudo.
+
+   O truque é só de camadas (z-index):
+       canvas   fica FIXO no fundo, camada 0
+       a capa   por cima dele, transparente, camada 1
+       a folha  opaca, camada 1 — desliza por cima do canvas
+   ------------------------------------------------------------ */
+
+body.tem-lua{ background: var(--ceu); }
+
+:root{ --ceu: #04040a; }
+
+#lua{
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+
+.capa-lua{
+  position: relative; z-index: 1;
+  min-height: 100svh;
+  display: flex; flex-direction: column; justify-content: center;
+  max-width: 790px; margin: 0 auto; padding: 0 26px;
+  color: #f3f4f6;
+}
+.capa-lua .eyebrow{ color: rgba(243,244,246,.62); }
+.capa-lua h1{ margin: 16px 0 14px; }
+.capa-lua .sub{ color: rgba(243,244,246,.80); }
+.capa-lua a{ color: #f3f4f6; }
+
+/* A setinha de "tem mais coisa aqui embaixo". Sem ela, numa tela
+   cheia de céu preto, a pessoa acha que a página acabou. */
+.desce{
+  margin-top: 40px;
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(243,244,246,.62); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px;
+  align-self: flex-start;
+  border-bottom: 1px solid rgba(243,244,246,.28); padding-bottom: 6px;
+}
+.desce:hover{ color: #fff; border-color: #fff; }
+.desce span{ animation: respira 2.4s ease-in-out infinite; }
+@keyframes respira{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(4px) } }
+
+/* A folha da aula: opaca, e é ela que cobre a lua ao subir. */
+body.tem-lua .folha{
+  position: relative; z-index: 1;
+  background: var(--papel);
+  padding-top: 54px;
+  box-shadow: 0 -40px 80px rgba(0,0,0,.5);
+}
+
+/* Com a capa em cima, a primeira seção não precisa da borda antiga. */
+body.tem-lua header.capa{ display: none; }
+
+@media (prefers-reduced-motion: reduce){
+  .desce span{ animation: none; }
+}
